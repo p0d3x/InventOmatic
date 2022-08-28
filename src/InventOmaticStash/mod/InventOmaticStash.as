@@ -25,9 +25,6 @@ public class InventOmaticStash extends MovieClip {
     private var _priceCheckItemExtractor:VendorPriceCheckExtractor;
     private var _itemWorker:ItemWorker;
     private var _parent:MovieClip;
-    public var extractButton:BSButtonHintData;
-    public var transferButton:BSButtonHintData;
-    public var scrapItemsButton:BSButtonHintData;
     public var buttonHintBar:BSButtonHintBar;
     public var config:Object;
 
@@ -64,36 +61,45 @@ public class InventOmaticStash extends MovieClip {
         }
 
         // noinspection JSValidateTypes
-        var buttons:Vector.<BSButtonHintData> = new Vector.<BSButtonHintData>();
+        var buttons:Vector.<BSButtonHintData>;
         try {
             buttons = this.parentClip.ButtonHintDataV;
         } catch (e:Error) {
-            Logger.get().error("Error getting button hints from parent: " + e);
+            Logger.get().errorHandler("Error getting button hints from parent: ", e);
+            return;
         }
 
         if (config.extractConfig && config.extractConfig.enabled) {
-            this.extractButton = new BSButtonHintData("Extract items", "O", "PSN_Start",
-                    "Xenon_Start", 1,
-                    this.extractDataCallback);
-            this.extractButton.ButtonVisible = true;
-            this.extractButton.ButtonDisabled = false;
-            buttons.push(this.extractButton);
+            Logger.get().debug("adding Extract button");
+            var extractButton:BSButtonHintData = new BSButtonHintData("Extract items", "O", "PSN_Start",
+                    "Xenon_Start", 1, this.extractDataCallback);
+            extractButton.ButtonVisible = true;
+            extractButton.ButtonDisabled = false;
+            buttons.push(extractButton);
+        } else {
+            Logger.get().debug("Extract not enabled, not adding Extract button");
         }
 
         if (config.transferConfig && config.transferConfig.enabled) {
-            this.transferButton = new BSButtonHintData("Transfer items", "P", "PSN_Start",
+            Logger.get().debug("adding Transfer button");
+            var transferButton:BSButtonHintData = new BSButtonHintData("Transfer items", "P", "PSN_Start",
                     "Xenon_Start", 1, this.transferItemsCallback);
-            this.transferButton.ButtonVisible = true;
-            this.transferButton.ButtonDisabled = false;
-            buttons.push(this.transferButton);
+            transferButton.ButtonVisible = true;
+            transferButton.ButtonDisabled = false;
+            buttons.push(transferButton);
+        } else {
+            Logger.get().debug("Transfer not enabled, not adding Extract button");
         }
 
         if (config.scrapConfig && config.scrapConfig.enabled) {
-            this.scrapItemsButton = new BSButtonHintData("Scrap items", "I", "PSN_Start",
+            Logger.get().debug("adding Scrap button");
+            var scrapItemsButton:BSButtonHintData = new BSButtonHintData("Scrap items", "I", "PSN_Start",
                     "Xenon_Start", 1, this.scrapItemsCallback);
-            this.scrapItemsButton.ButtonVisible = true;
-            this.scrapItemsButton.ButtonDisabled = false;
-            buttons.push(this.scrapItemsButton);
+            scrapItemsButton.ButtonVisible = true;
+            scrapItemsButton.ButtonDisabled = false;
+            buttons.push(scrapItemsButton);
+        } else {
+            Logger.get().debug("Scrap not enabled, not adding Extract button");
         }
 
         try {
@@ -145,18 +151,19 @@ public class InventOmaticStash extends MovieClip {
 
     //noinspection JSUnusedGlobalSymbols
     public function setParent(parent:MovieClip):void {
+        ShowHUDMessage("Mod Initializing");
         this._parent = parent;
         this._itemExtractor = new ItemExtractor(_parent);
         this._priceCheckItemExtractor = new VendorPriceCheckExtractor(_parent);
         this._itemWorker = new ItemWorker();
         this.buttonHintBar = _parent.ButtonHintBar_mc;
         loadConfig();
-        init();
     }
 
     private function loadConfig():void {
         try {
-            var url:URLRequest = new URLRequest("../inventOmaticStashConfig.json");
+            ShowHUDMessage("Loading config file");
+            var url:URLRequest = new URLRequest("../inventOmaticStashConfigNew.json");
             var loader:URLLoader = new URLLoader();
             loader.load(url);
             loader.addEventListener(Event.COMPLETE, loaderComplete);
@@ -165,18 +172,19 @@ public class InventOmaticStash extends MovieClip {
                 var jsonData:Object = new JSONDecoder(loader.data, true).getValue();
                 config = jsonData;
                 if (config.extractConfig && config.extractConfig.enabled) {
-                    _itemExtractor.verboseOutput = jsonData.extractConfig.verboseOutput;
-                    _itemExtractor.apiMethods = jsonData.extractConfig.apiMethods;
-                    _itemExtractor.additionalItemDataForAll = jsonData.extractConfig.additionalItemDataForAll;
-                    _priceCheckItemExtractor.verboseOutput = jsonData.extractConfig.verboseOutput;
-                    _priceCheckItemExtractor.apiMethods = jsonData.extractConfig.apiMethods;
-                    _priceCheckItemExtractor.additionalItemDataForAll = jsonData.extractConfig.additionalItemDataForAll;
+                    _itemExtractor.verboseOutput = config.extractConfig.verboseOutput;
+                    _itemExtractor.apiMethods = config.extractConfig.apiMethods;
+                    _itemExtractor.additionalItemDataForAll = config.extractConfig.additionalItemDataForAll;
+                    _priceCheckItemExtractor.verboseOutput = config.extractConfig.verboseOutput;
+                    _priceCheckItemExtractor.apiMethods = config.extractConfig.apiMethods;
+                    _priceCheckItemExtractor.additionalItemDataForAll = config.extractConfig.additionalItemDataForAll;
                 }
-                Logger.get().debugMode = jsonData.debug;
+                Logger.get().debugMode = config.debug;
                 ShowHUDMessage("Config file is loaded!");
+                init();
             }
         } catch (e:Error) {
-            ShowHUDMessage(e.getStackTrace());
+            ShowHUDMessage("Failed to load config: " + e.message, true);
         }
     }
 

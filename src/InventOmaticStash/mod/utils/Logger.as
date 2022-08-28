@@ -44,8 +44,7 @@ public class Logger {
         }
         trace("[DEBUG]");
         trace(object);
-        this._debugger.appendText("[DEBUG] " + convert(object));
-        this.nl();
+        this._debugger.appendText("[DEBUG] " + convert(object) + "\n");
     }
 
     public function error(object:Object):void {
@@ -54,8 +53,7 @@ public class Logger {
         }
         trace("[ERROR]");
         trace(object);
-        this._debugger.appendText("[ERROR] " + convert(object));
-        this.nl();
+        this._debugger.appendText("[ERROR] " + convert(object) + "\n");
     }
 
     public function info(object:Object):void {
@@ -64,8 +62,7 @@ public class Logger {
         }
         trace("[INFO]");
         trace(object);
-        this._debugger.appendText("[INFO] " + convert(object));
-        this.nl();
+        this._debugger.appendText("[INFO] " + convert(object) + "\n");
     }
 
     public function warn(object:Object):void {
@@ -74,14 +71,7 @@ public class Logger {
         }
         trace("[WARN]");
         trace(object);
-        this._debugger.appendText("[WARN] " + convert(object));
-        this.nl();
-    }
-
-    private function nl():void {
-        this._debugger.appendText("\r\n");
-        this._debugger.appendText("-----------------");
-        this._debugger.appendText("\r\n");
+        this._debugger.appendText("[WARN] " + convert(object) + "\n");
     }
 
     private static function convert(object:Object):String {
@@ -98,23 +88,12 @@ public class Logger {
     }
 
     public function errorHandler(text:String, e:Error) {
-        Logger.get().error(text);
         try {
-            Logger.get().error(e);
+            Logger.get().error(text + ": " + e);
         } catch (e:*) {
-
         }
         try {
-            Logger.get().error(e.name);
-        } catch (e:*) {
-
-        }
-        try {
-            Logger.get().error(e.message);
-        } catch (e:*) {
-
-        }
-        try {
+            // this doesn't work in non debug builds apparently
             Logger.get().error(e.getStackTrace());
         } catch (e:*) {
 
