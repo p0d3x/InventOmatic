@@ -34,7 +34,7 @@ public class InventOmaticStash extends MovieClip {
     public function InventOmaticStash() {
         super();
         try {
-            Logger.DEBUG_MODE = false;
+            Logger.DEBUG_MODE = true;
             Logger.init(this.debugLogger);
         } catch (e:Error) {
             Logger.get().error(e);
@@ -62,21 +62,6 @@ public class InventOmaticStash extends MovieClip {
             Logger.get().error("Error getting button hint bar from parent.");
             return;
         }
-        this.extractButton = new BSButtonHintData("Extract items", "O", "PSN_Start",
-                "Xenon_Start", 1,
-                this.extractDataCallback);
-        this.extractButton.ButtonVisible = true;
-        this.extractButton.ButtonDisabled = false;
-
-        this.transferButton = new BSButtonHintData("Transfer items", "P", "PSN_Start",
-                "Xenon_Start", 1, this.transferItemsCallback);
-        this.transferButton.ButtonVisible = true;
-        this.transferButton.ButtonDisabled = false;
-
-        this.scrapItemsButton = new BSButtonHintData("Scrap items", "I", "PSN_Start",
-                "Xenon_Start", 1, this.scrapItemsCallback);
-        this.scrapItemsButton.ButtonVisible = true;
-        this.scrapItemsButton.ButtonDisabled = false;
 
         // noinspection JSValidateTypes
         var buttons:Vector.<BSButtonHintData> = new Vector.<BSButtonHintData>();
@@ -85,9 +70,31 @@ public class InventOmaticStash extends MovieClip {
         } catch (e:Error) {
             Logger.get().error("Error getting button hints from parent: " + e);
         }
-        buttons.push(this.extractButton);
-        buttons.push(this.transferButton);
-        buttons.push(this.scrapItemsButton);
+
+        if (config.extractConfig && config.extractConfig.enabled) {
+            this.extractButton = new BSButtonHintData("Extract items", "O", "PSN_Start",
+                    "Xenon_Start", 1,
+                    this.extractDataCallback);
+            this.extractButton.ButtonVisible = true;
+            this.extractButton.ButtonDisabled = false;
+            buttons.push(this.extractButton);
+        }
+
+        if (config.transferConfig && config.transferConfig.enabled) {
+            this.transferButton = new BSButtonHintData("Transfer items", "P", "PSN_Start",
+                    "Xenon_Start", 1, this.transferItemsCallback);
+            this.transferButton.ButtonVisible = true;
+            this.transferButton.ButtonDisabled = false;
+            buttons.push(this.transferButton);
+        }
+
+        if (config.scrapConfig && config.scrapConfig.enabled) {
+            this.scrapItemsButton = new BSButtonHintData("Scrap items", "I", "PSN_Start",
+                    "Xenon_Start", 1, this.scrapItemsCallback);
+            this.scrapItemsButton.ButtonVisible = true;
+            this.scrapItemsButton.ButtonDisabled = false;
+            buttons.push(this.scrapItemsButton);
+        }
 
         try {
             buttonHintBar.SetButtonHintData(buttons);
@@ -155,15 +162,17 @@ public class InventOmaticStash extends MovieClip {
             loader.addEventListener(Event.COMPLETE, loaderComplete);
 
             function loaderComplete(e:Event):void {
-                var jsonData:Object = new JSONDecoder(loader.data, true).getValue()
-                _itemExtractor.verboseOutput = jsonData.verboseOutput;
-                _itemExtractor.apiMethods = jsonData.apiMethods;
-                _itemExtractor.additionalItemDataForAll = jsonData.additionalItemDataForAll;
-                _priceCheckItemExtractor.verboseOutput = jsonData.verboseOutput;
-                _priceCheckItemExtractor.apiMethods = jsonData.apiMethods;
-                _priceCheckItemExtractor.additionalItemDataForAll = jsonData.additionalItemDataForAll;
-                Logger.get().debugMode = jsonData.debug;
+                var jsonData:Object = new JSONDecoder(loader.data, true).getValue();
                 config = jsonData;
+                if (config.extractConfig && config.extractConfig.enabled) {
+                    _itemExtractor.verboseOutput = jsonData.extractConfig.verboseOutput;
+                    _itemExtractor.apiMethods = jsonData.extractConfig.apiMethods;
+                    _itemExtractor.additionalItemDataForAll = jsonData.extractConfig.additionalItemDataForAll;
+                    _priceCheckItemExtractor.verboseOutput = jsonData.extractConfig.verboseOutput;
+                    _priceCheckItemExtractor.apiMethods = jsonData.extractConfig.apiMethods;
+                    _priceCheckItemExtractor.additionalItemDataForAll = jsonData.extractConfig.additionalItemDataForAll;
+                }
+                Logger.get().debugMode = jsonData.debug;
                 ShowHUDMessage("Config file is loaded!");
             }
         } catch (e:Error) {
@@ -177,13 +186,13 @@ public class InventOmaticStash extends MovieClip {
 
     private function keyUpHandler(e:KeyboardEvent):void {
         // o
-        if (e.keyCode == 79) {
+        if (e.keyCode == 79 && config.extractConfig && config.extractConfig.enabled) {
             extractDataCallback();
             // p
-        } else if (e.keyCode == 80) {
+        } else if (e.keyCode == 80 && config.transferConfig && config.transferConfig.enabled) {
             transferItemsCallback();
             // i
-        } else if (e.keyCode == 73) {
+        } else if (e.keyCode == 73 && config.scrapConfig && config.scrapConfig.enabled) {
             scrapItemsCallback();
         }
     }
