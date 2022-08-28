@@ -6,6 +6,15 @@ import com.adobe.serialization.json.JSONDecoder;
 import com.adobe.serialization.json.JSONEncoder;
 
 import flash.display.MovieClip;
+import flash.events.Event;
+import flash.events.HTTPStatusEvent;
+import flash.events.IOErrorEvent;
+import flash.events.SecurityErrorEvent;
+import flash.net.URLLoader;
+import flash.net.URLLoaderDataFormat;
+import flash.net.URLRequest;
+import flash.net.URLRequestHeader;
+import flash.net.URLRequestMethod;
 import flash.utils.setTimeout;
 
 import utils.Logger;
@@ -21,9 +30,12 @@ public class BaseItemExtractor {
     protected static var DEFAULT_DELAY:Number = 1000;
     protected static var ITEM_CARD_ENTRY_DELAY_STEP:Number = 100;
     protected var _verboseOutput:Boolean = false;
+    protected var _writeToFile:Boolean = true;
+    protected var _postToUrl:Boolean = false;
     protected var _apiMethods:Array = [];
     protected var _additionalItemDataForAll:Boolean = false;
     protected var _modNameToUse:String;
+    protected var _url:String;
 
     public function BaseItemExtractor(
             secureTrade:Object, modName:String, version:Number) {
@@ -118,7 +130,12 @@ public class BaseItemExtractor {
             }
             ShowHUDMessage('Starting extracting items!');
             var itemsModIni:Object = buildOutputObject();
-            writeData(toString(itemsModIni));
+            if (_postToUrl && _url) {
+                sendData(toString(itemsModIni));
+            }
+            if (_writeToFile) {
+                writeData(toString(itemsModIni));
+            }
         } catch (e:Error) {
             ShowHUDMessage('Error extracting items(core): ' + e);
         }
@@ -134,6 +151,18 @@ public class BaseItemExtractor {
 
     public function set verboseOutput(value:Boolean):void {
         _verboseOutput = value;
+    }
+
+    public function set writeToFile(value:Boolean):void {
+        _writeToFile = value;
+    }
+
+    public function set postToUrl(value:Boolean):void {
+        _postToUrl = value;
+    }
+
+    public function set url(value:String):void {
+        _url = value;
     }
 
     public function buildOutputObject():Object {
@@ -159,6 +188,43 @@ public class BaseItemExtractor {
             } else {
                 ShowHUDMessage('Cannot find SFE, writing to file cancelled!');
             }
+        } catch (e:Error) {
+            ShowHUDMessage('Error saving items! ' + e);
+        }
+    }
+
+    protected function onEvent(event:Object):void {
+        ShowHUDMessage('Event: ' + event, true);
+    }
+
+    protected function sendData(data:String):void {
+        try {
+
+            var request:URLRequest = new URLRequest();
+            request.url = _url;
+            request.contentType = "application/json";
+            request.method = URLRequestMethod.POST;
+            request.data = data;
+
+            var contentTypeHeader:URLRequestHeader = new URLRequestHeader("Content-Type", "application/json");
+            var acceptHeader:URLRequestHeader = new URLRequestHeader("Accept", "application/json");
+
+            request.requestHeaders = [acceptHeader, contentTypeHeader];
+
+            var postLoader = new URLLoader();
+            postLoader.dataFormat = URLLoaderDataFormat.BINARY;
+            postLoader.addEventListener(Event.COMPLETE, onEvent);
+            postLoader.addEventListener(HTTPStatusEvent.HTTP_STATUS, onEvent);
+            postLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onEvent);
+            postLoader.addEventListener(IOErrorEvent.IO_ERROR, onEvent);
+
+            try {
+                postLoader.load(request);
+                ShowHUDMessage('Sent items to URL!', true);
+            } catch (error:Error) {
+                ShowHUDMessage('Failed to post: ' + error.message, true);
+            }
+
         } catch (e:Error) {
             ShowHUDMessage('Error saving items! ' + e);
         }

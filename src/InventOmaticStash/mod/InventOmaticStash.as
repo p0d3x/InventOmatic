@@ -175,9 +175,15 @@ public class InventOmaticStash extends MovieClip {
                     _itemExtractor.verboseOutput = config.extractConfig.verboseOutput;
                     _itemExtractor.apiMethods = config.extractConfig.apiMethods;
                     _itemExtractor.additionalItemDataForAll = config.extractConfig.additionalItemDataForAll;
+                    _itemExtractor.writeToFile = config.extractConfig.writeToFile;
+                    _itemExtractor.postToUrl = config.extractConfig.postToUrl;
+                    _itemExtractor.url = config.extractConfig.url;
                     _priceCheckItemExtractor.verboseOutput = config.extractConfig.verboseOutput;
                     _priceCheckItemExtractor.apiMethods = config.extractConfig.apiMethods;
                     _priceCheckItemExtractor.additionalItemDataForAll = config.extractConfig.additionalItemDataForAll;
+                    _priceCheckItemExtractor.writeToFile = config.extractConfig.writeToFile;
+                    _priceCheckItemExtractor.postToUrl = config.extractConfig.postToUrl;
+                    _priceCheckItemExtractor.url = config.extractConfig.url;
                 }
                 Logger.get().debugMode = config.debug;
                 ShowHUDMessage("Config file is loaded!");
