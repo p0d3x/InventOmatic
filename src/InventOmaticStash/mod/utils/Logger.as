@@ -2,6 +2,8 @@ package utils {
 
 import com.adobe.serialization.json.JSON;
 
+import flash.events.Event;
+
 import flash.text.TextField;
 
 public class Logger {
@@ -27,6 +29,7 @@ public class Logger {
         this._debugger.mouseWheelEnabled = true;
         this._debugger.mouseEnabled = true;
         this._debugger.useRichTextClipboard = true;
+        this._debugger.width = this._debugger.width * 2;
     }
 
     public function clear(): void {
@@ -45,6 +48,7 @@ public class Logger {
         trace("[DEBUG]");
         trace(object);
         this._debugger.appendText("[DEBUG] " + convert(object) + "\n");
+        this._debugger.scrollV = this._debugger.maxScrollV;
     }
 
     public function error(object:Object):void {
@@ -54,6 +58,7 @@ public class Logger {
         trace("[ERROR]");
         trace(object);
         this._debugger.appendText("[ERROR] " + convert(object) + "\n");
+        this._debugger.scrollV = this._debugger.maxScrollV;
     }
 
     public function info(object:Object):void {
@@ -63,6 +68,7 @@ public class Logger {
         trace("[INFO]");
         trace(object);
         this._debugger.appendText("[INFO] " + convert(object) + "\n");
+        this._debugger.scrollV = this._debugger.maxScrollV;
     }
 
     public function warn(object:Object):void {
@@ -72,6 +78,7 @@ public class Logger {
         trace("[WARN]");
         trace(object);
         this._debugger.appendText("[WARN] " + convert(object) + "\n");
+        this._debugger.scrollV = this._debugger.maxScrollV;
     }
 
     private static function convert(object:Object):String {

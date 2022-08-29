@@ -2,6 +2,10 @@
 import Shared.AS3.Data.BSUIDataManager;
 import Shared.AS3.Events.CustomEvent;
 
+import com.adobe.serialization.json.JSONEncoder;
+
+import utils.Logger;
+
 public class GameApiDataExtractor {
     public static const EVENT_TRANSFER_ITEM:String = "Container::TransferItem";
     public static const EVENT_INSPECT_ITEM:String = "Container::InspectItem";
@@ -11,6 +15,7 @@ public class GameApiDataExtractor {
     public static var CharacterInfoData:String = "CharacterInfoData";
     public static var AccountInfoData:String = "AccountInfoData";
     public static var InventoryItemCardData:String = "InventoryItemCardData";
+    public static var OtherInventoryTypeData:String = "OtherInventoryTypeData";
     private static var GAME_API_METHODS:Array = [
         "FriendsContextMenuData",
         "StoreCategoryData",
@@ -59,9 +64,38 @@ public class GameApiDataExtractor {
 //        "AccountInfoData"
     ];
 
+
+    protected var sfCodeObj:Object;
+    protected var apiMethods:Array = [];
+
+    public function GameApiDataExtractor(sfCodeObj:Object, config:*) {
+        this.sfCodeObj = sfCodeObj;
+        if (config.apiMethods) {
+            this.apiMethods = config.apiMethods;
+        } else {
+            this.apiMethods = GAME_API_METHODS;
+        }
+    }
+
+    public function extract():void {
+        try {
+            var data:Object = GameApiDataExtractor.getFullApiData(apiMethods);
+            var str = toString(data);
+            sfCodeObj.call('writeItemsModFile', str);
+            Logger.get().info("wrote api methods to file," + str.length + " bytes");
+        } catch (e:Error) {
+            Logger.get().errorHandler("failed to extract api data", e);
+        }
+    }
+
+    protected static function toString(obj:Object):String {
+        return new JSONEncoder(obj).getString();
+    }
+
     public static function getFullApiData(array:Array):Object {
         var gameApiData:Object = {};
         if (array == null || array.length < 1) {
+            Logger.get().debug("no api methods defined in config, using 'all'");
             array = GAME_API_METHODS;
         }
         array.forEach(function (apiMethodName:String):void {

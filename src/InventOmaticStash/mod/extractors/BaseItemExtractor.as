@@ -6,22 +6,12 @@ import com.adobe.serialization.json.JSONDecoder;
 import com.adobe.serialization.json.JSONEncoder;
 
 import flash.display.MovieClip;
-import flash.events.Event;
-import flash.events.HTTPStatusEvent;
-import flash.events.IOErrorEvent;
-import flash.events.SecurityErrorEvent;
-import flash.net.URLLoader;
-import flash.net.URLLoaderDataFormat;
-import flash.net.URLRequest;
-import flash.net.URLRequestHeader;
-import flash.net.URLRequestMethod;
 import flash.utils.setTimeout;
 
 import utils.Logger;
 
 public class BaseItemExtractor {
 
-    protected var secureTrade:Object;
     protected var playerInventory:Array = [];
     protected var stashInventory:Array = [];
     protected var version:Number;
@@ -29,20 +19,14 @@ public class BaseItemExtractor {
     protected static var itemCardEntries:Object = {};
     protected static var DEFAULT_DELAY:Number = 1000;
     protected static var ITEM_CARD_ENTRY_DELAY_STEP:Number = 100;
-    protected var _verboseOutput:Boolean = false;
-    protected var _writeToFile:Boolean = true;
-    protected var _postToUrl:Boolean = false;
-    protected var _apiMethods:Array = [];
-    protected var _additionalItemDataForAll:Boolean = false;
-    protected var _modNameToUse:String;
-    protected var _url:String;
+    protected var additionalItemDataForAll:Boolean = false;
+    protected var inventoryConsumer:InventoryConsumer;
 
-    public function BaseItemExtractor(
-            secureTrade:Object, modName:String, version:Number) {
-        this.secureTrade = secureTrade;
+    public function BaseItemExtractor(modName:String, version:Number, consumer:InventoryConsumer, config:*) {
         this.modName = modName;
         this.version = version;
-        this._modNameToUse = modName;
+        this.inventoryConsumer = consumer;
+        this.additionalItemDataForAll = config.additionalItemDataForAll;
         GameApiDataExtractor.subscribeInventoryItemCardData(onInventoryItemCardDataUpdate);
     }
 
@@ -51,25 +35,19 @@ public class BaseItemExtractor {
     }
 
     public function setInventory(parent:MovieClip):void {
-        if (!isSfeDefined()) {
-            ShowHUDMessage('SFE cannot be found. Items extraction cancelled.');
-            return;
-        }
-        ShowHUDMessage("Starting gathering items data from inventory!");
-        var delay:Number = populateItemCards(parent, parent.PlayerInventory_mc, false,
-                playerInventory);
+        Logger.get().info("Starting gathering items data from inventory!");
+        var delay:Number = populateItemCards(parent, parent.PlayerInventory_mc, false, playerInventory);
         setTimeout(function ():void {
-            ShowHUDMessage("Starting gathering items data from stash!");
-            var delay2:Number = populateItemCards(parent, parent.OfferInventory_mc, true,
-                    stashInventory);
+            Logger.get().info("Starting gathering items data from stash!");
+            var delay2:Number = populateItemCards(parent, parent.OfferInventory_mc, true, stashInventory);
             setTimeout(function ():void {
-                ShowHUDMessage("Building output object...");
+                Logger.get().info("Building output object...");
                 try {
                     populateItemCardEntries(playerInventory);
                     populateItemCardEntries(stashInventory);
                     extractItems();
                 } catch (e:Error) {
-                    ShowHUDMessage("Error building output object " + e);
+                    Logger.get().info("Error building output object " + e);
                 }
             }, delay2);
 
@@ -90,14 +68,13 @@ public class BaseItemExtractor {
         var delay:Number = ITEM_CARD_ENTRY_DELAY_STEP;
         inv.forEach(function (item:Object):void {
             item.ItemCardEntries = [];
-            if (item.isLegendary || _additionalItemDataForAll) {
+            if (item.isLegendary || additionalItemDataForAll) {
                 setTimeout(function ():void {
                     try {
                         parent.selectedList = inventory;
                         inventory.Active = true;
                         GameApiDataExtractor.selectItem(item.serverHandleId, fromContainer);
-                        var itemCardData:Object = clone(
-                                GameApiDataExtractor.getInventoryItemCardData());
+                        var itemCardData:Object = clone(GameApiDataExtractor.getInventoryItemCardData());
                         itemCardEntries[itemCardData.serverHandleId] = itemCardData;
                         output.push(item);
                     } catch (e:Error) {
@@ -124,45 +101,13 @@ public class BaseItemExtractor {
 
     public function extractItems():void {
         try {
-            if (!isSfeDefined()) {
-                ShowHUDMessage('SFE cannot be found. Items extraction cancelled.');
-                return;
-            }
             ShowHUDMessage('Starting extracting items!');
             var itemsModIni:Object = buildOutputObject();
-            if (_postToUrl && _url) {
-                sendData(toString(itemsModIni));
-            }
-            if (_writeToFile) {
-                writeData(toString(itemsModIni));
-            }
+            inventoryConsumer.accept(itemsModIni);
+            ShowHUDMessage('Done saving items!', true);
         } catch (e:Error) {
             ShowHUDMessage('Error extracting items(core): ' + e);
         }
-    }
-
-    public function set apiMethods(value:Array):void {
-        _apiMethods = value;
-    }
-
-    public function set additionalItemDataForAll(value:Boolean):void {
-        _additionalItemDataForAll = value;
-    }
-
-    public function set verboseOutput(value:Boolean):void {
-        _verboseOutput = value;
-    }
-
-    public function set writeToFile(value:Boolean):void {
-        _writeToFile = value;
-    }
-
-    public function set postToUrl(value:Boolean):void {
-        _postToUrl = value;
-    }
-
-    public function set url(value:String):void {
-        _url = value;
     }
 
     public function buildOutputObject():Object {
@@ -176,76 +121,15 @@ public class BaseItemExtractor {
         return new JSONEncoder(obj).getString();
     }
 
-    public function isSfeDefined():Boolean {
-        return this.secureTrade.__SFCodeObj != null && this.secureTrade.__SFCodeObj.call != null;
-    }
-
-    protected function writeData(data:String):void {
-        try {
-            if (isSfeDefined()) {
-                this.secureTrade.__SFCodeObj.call('writeItemsModFile', data);
-                ShowHUDMessage('Done saving items!', true);
-            } else {
-                ShowHUDMessage('Cannot find SFE, writing to file cancelled!');
-            }
-        } catch (e:Error) {
-            ShowHUDMessage('Error saving items! ' + e);
-        }
-    }
-
-    protected function onEvent(event:Object):void {
-        ShowHUDMessage('Event: ' + event, true);
-    }
-
-    protected function sendData(data:String):void {
-        try {
-
-            var request:URLRequest = new URLRequest();
-            request.url = _url;
-            request.contentType = "application/json";
-            request.method = URLRequestMethod.POST;
-            request.data = data;
-
-            var contentTypeHeader:URLRequestHeader = new URLRequestHeader("Content-Type", "application/json");
-            var acceptHeader:URLRequestHeader = new URLRequestHeader("Accept", "application/json");
-
-            request.requestHeaders = [acceptHeader, contentTypeHeader];
-
-            var postLoader = new URLLoader();
-            postLoader.dataFormat = URLLoaderDataFormat.BINARY;
-            postLoader.addEventListener(Event.COMPLETE, onEvent);
-            postLoader.addEventListener(HTTPStatusEvent.HTTP_STATUS, onEvent);
-            postLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onEvent);
-            postLoader.addEventListener(IOErrorEvent.IO_ERROR, onEvent);
-
-            try {
-                postLoader.load(request);
-                ShowHUDMessage('Sent items to URL!', true);
-            } catch (error:Error) {
-                ShowHUDMessage('Failed to post: ' + error.message, true);
-            }
-
-        } catch (e:Error) {
-            ShowHUDMessage('Error saving items! ' + e);
-        }
-    }
-
     public function ShowHUDMessage(text:String, force:Boolean = false):void {
-        if (_verboseOutput || force) {
+        if (Logger.DEBUG_MODE || force) {
             GlobalFunc.ShowHUDMessage('[' + modName + ' v' + version + '] ' + text);
         }
+        Logger.get().debug(text);
     }
 
     public function isValidMode(menuMode:uint):Boolean {
         return false;
-    }
-
-    public function getInvalidModeMessage():String {
-        return 'Invalid mode';
-    }
-
-    public function showInvalidModeMessage():void {
-        this.ShowHUDMessage(getInvalidModeMessage());
     }
 
     private function onInventoryItemCardDataUpdate(eventData:FromClientDataEvent):void {

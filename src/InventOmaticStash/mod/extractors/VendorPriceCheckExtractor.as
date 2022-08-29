@@ -8,13 +8,23 @@ public class VendorPriceCheckExtractor extends BaseItemExtractor {
 
     public static const MOD_NAME:String = "Invent-O-Matic-Vendor-Extractor";
 
+    protected var accountName:String;
+
+    public function VendorPriceCheckExtractor(consumer:InventoryConsumer, config:*) {
+        super(MOD_NAME, Version.VENDOR, consumer, config);
+        var vendorData = GameApiDataExtractor.getApiData(GameApiDataExtractor.OtherInventoryTypeData);
+        if (vendorData && vendorData.defaultHeaderText) {
+            this.accountName = vendorData.defaultHeaderText;
+        }
+    }
+
     override public function buildOutputObject():Object {
         var itemsModIni:Object = super.buildOutputObject();
         itemsModIni.characterInventories = {};
         var characterInventory:Object = {};
         characterInventory.stashInventory = this.stashInventory;
         characterInventory.AccountInfoData = {
-            name: secureTrade.m_DefaultHeaderText
+            name: accountName
         };
         characterInventory.CharacterInfoData = {};
         itemsModIni.characterInventories['priceCheck'] = characterInventory;
@@ -22,13 +32,8 @@ public class VendorPriceCheckExtractor extends BaseItemExtractor {
     }
 
     public override function setInventory(parent:MovieClip):void {
-        if (!isSfeDefined()) {
-            ShowHUDMessage('SFE cannot be found. Items extraction cancelled.');
-            return;
-        }
         ShowHUDMessage("Starting gathering items data from stash!");
-        var delay:Number = populateItemCards(parent, parent.OfferInventory_mc, true,
-                stashInventory);
+        var delay:Number = populateItemCards(parent, parent.OfferInventory_mc, true, stashInventory);
         setTimeout(function ():void {
             populateItemCardEntries(stashInventory);
             extractItems();
@@ -39,14 +44,6 @@ public class VendorPriceCheckExtractor extends BaseItemExtractor {
         return menuMode === SecureTradeShared.MODE_PLAYERVENDING
                 || menuMode === SecureTradeShared.MODE_NPCVENDING
                 || menuMode === SecureTradeShared.MODE_VENDING_MACHINE;
-    }
-
-    override public function getInvalidModeMessage():String {
-        return "Please, use this function only in player's vendor!";
-    }
-
-    public function VendorPriceCheckExtractor(value:Object) {
-        super(value, MOD_NAME, Version.VENDOR);
     }
 }
 }
