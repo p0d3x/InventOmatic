@@ -4,6 +4,8 @@ import Shared.AS3.Events.CustomEvent;
 
 import com.adobe.serialization.json.JSONEncoder;
 
+import modules.DevToolsModuleConfig;
+
 import utils.Logger;
 
 public class GameApiDataExtractor {
@@ -68,7 +70,7 @@ public class GameApiDataExtractor {
     protected var sfCodeObj:Object;
     protected var apiMethods:Array = [];
 
-    public function GameApiDataExtractor(sfCodeObj:Object, config:*) {
+    public function GameApiDataExtractor(sfCodeObj:Object, config:DevToolsModuleConfig) {
         this.sfCodeObj = sfCodeObj;
         if (config.apiMethods) {
             this.apiMethods = config.apiMethods;

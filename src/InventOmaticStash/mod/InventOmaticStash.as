@@ -1,37 +1,31 @@
 ﻿package {
-import Shared.AS3.BSButtonHintBar;
 import Shared.AS3.BSButtonHintData;
+import Shared.AS3.Data.BSUIDataManager;
 import Shared.GlobalFunc;
 
 import com.adobe.serialization.json.JSONDecoder;
 
-import extractors.BaseItemExtractor;
-import extractors.GameApiDataExtractor;
-import extractors.InventoryConsumer;
-import extractors.ItemExtractor;
-import extractors.VendorPriceCheckExtractor;
-
 import flash.display.MovieClip;
 import flash.events.Event;
-import flash.events.KeyboardEvent;
 import flash.net.URLLoader;
 import flash.net.URLRequest;
 import flash.text.TextField;
-import flash.ui.Keyboard;
-import flash.utils.Dictionary;
-import flash.utils.describeType;
+import flash.utils.setTimeout;
+
+import modules.BaseModule;
+import modules.DevToolsModule;
+import modules.ExtractorModule;
+import modules.ScrapModule;
+import modules.TransferModule;
 
 import utils.Logger;
 
 public class InventOmaticStash extends MovieClip {
 
     public var debugLogger:TextField;
-    private var _itemExtractor:ItemExtractor;
-    private var _priceCheckItemExtractor:VendorPriceCheckExtractor;
-    private var _itemWorker:ItemWorker;
-    private var _parent:MovieClip;
-    public var buttonHintBar:BSButtonHintBar;
-    public var config:Object;
+    protected var _parent:MovieClip;
+    protected var config:InventOmaticStashConfig;
+    protected var modules:Array;
 
     public function InventOmaticStash() {
         super();
@@ -39,150 +33,8 @@ public class InventOmaticStash extends MovieClip {
             Logger.DEBUG_MODE = true;
             Logger.init(this.debugLogger);
         } catch (e:Error) {
-            Logger.get().error(e);
             ShowHUDMessage("Error loading mod " + e, true);
-        }
-    }
-
-    private function init():void {
-        try {
-            this.initButtonHints();
-            stage.addEventListener(KeyboardEvent.KEY_UP, this.keyUpHandler);
-        } catch (e:Error) {
-            Logger.get().errorHandler("Error init buttons", e);
-        }
-    }
-
-    function getKeyboardDict():Dictionary {
-        var keyDescription:XML = describeType(Keyboard);
-        var keyNames:XMLList = keyDescription..constant.@name;
-
-        var keyboardDict:Dictionary = new Dictionary();
-
-        var len:int = keyNames.length();
-        for(var i:int = 0; i < len; i++) {
-            keyboardDict[Keyboard[keyNames[i]]] = keyNames[i];
-        }
-
-        return keyboardDict;
-    }
-
-    private function initButtonHints():void {
-        if (buttonHintBar == null) {
-            ShowHUDMessage("Unexpected error while adding buttons!");
-            Logger.get().error("Error getting button hint bar from parent.");
-            return;
-        }
-
-        // noinspection JSValidateTypes
-        var buttons:Vector.<BSButtonHintData>;
-        try {
-            buttons = this.parentClip.ButtonHintDataV;
-        } catch (e:Error) {
-            Logger.get().errorHandler("Error getting button hints from parent: ", e);
-            return;
-        }
-
-        var keyDict:Dictionary = getKeyboardDict();
-
-        if (config.extractConfig && config.extractConfig.enabled && config.extractConfig.keyCode) {
-            Logger.get().debug("adding Extract button");
-            var button:BSButtonHintData = buttonWithCallback("Extract Items",
-                    keyDict[config.extractConfig.keyCode], this.extractDataCallback);
-            buttons.push(button);
-        } else {
-            Logger.get().debug("Extract not enabled, not adding Extract button");
-        }
-
-        if (config.devToolsConfig && config.devToolsConfig.enabled && config.devToolsConfig.keyCode) {
-            Logger.get().debug("adding API-Extract button");
-            var button:BSButtonHintData = buttonWithCallback("Extract API",
-                    keyDict[config.devToolsConfig.keyCode], this.devToolsDebugCallback);
-            buttons.push(button);
-        } else {
-            Logger.get().debug("DevTools not enabled, not adding Extract-API button");
-        }
-
-        if (config.transferConfig && config.transferConfig.enabled && config.transferConfig.keyCode) {
-            Logger.get().debug("adding Transfer button");
-            var button:BSButtonHintData = buttonWithCallback("Transfer items",
-                    keyDict[config.transferConfig.keyCode], this.transferItemsCallback);
-            buttons.push(button);
-        } else {
-            Logger.get().debug("Transfer not enabled, not adding Transfer button");
-        }
-
-        if (config.scrapConfig && config.scrapConfig.enabled && config.scrapConfig.keyCode) {
-            Logger.get().debug("adding Scrap button");
-            var button:BSButtonHintData = buttonWithCallback("Scrap items",
-                    keyDict[config.scrapConfig.keyCode], this.scrapItemsCallback);
-            buttons.push(button);
-        } else {
-            Logger.get().debug("Scrap not enabled, not adding Scrap button");
-        }
-
-        try {
-            buttonHintBar.SetButtonHintData(buttons);
-            buttonHintBar.onRemovedFromStage();
-            buttonHintBar.onAddedToStage();
-            buttonHintBar.redrawDisplayObject();
-        } catch (e:Error) {
-            Logger.get().error("Error setting new button hints data: " + e);
-        }
-    }
-
-    private function buttonWithCallback(title:String, key:String, callback:Function):BSButtonHintData {
-        var extractButton:BSButtonHintData = new BSButtonHintData(title, key, "PSN_Start",
-                "Xenon_Start", 1, callback);
-        extractButton.ButtonVisible = true;
-        extractButton.ButtonDisabled = false;
-        return extractButton;
-    }
-
-    public function devToolsDebugCallback():void {
-        if (!isSfeDefined()) {
-            Logger.get().error("SFE not found, cannot extract!");
-            return;
-        }
-        var devToolsExtractor:GameApiDataExtractor = new GameApiDataExtractor(_parent.__SFCodeObj, config.devToolsConfig);
-        devToolsExtractor.extract();
-    }
-
-    public function extractDataCallback():void {
-        try {
-            var extractorToUse:BaseItemExtractor = this._priceCheckItemExtractor;
-            if (!extractorToUse.isValidMode(this.parentClip.m_MenuMode)) {
-                extractorToUse = this._itemExtractor;
-            }
-            ShowHUDMessage("Loaded extractor: " + extractorToUse.getExtractorName())
-            extractorToUse.setInventory(this.parentClip);
-        } catch (e:Error) {
-            ShowHUDMessage("Error extracting items(init): " + e, true);
-        }
-    }
-
-    public function transferItemsCallback():void {
-        try {
-            _itemWorker.stashInventory = this.parentClip.OfferInventory_mc.ItemList_mc.List_mc.MenuListData;
-            _itemWorker.playerInventory = this.parentClip.PlayerInventory_mc.ItemList_mc.List_mc.MenuListData;
-            _itemWorker.config = config;
-            _itemWorker.transferItems();
-        } catch (e:Error) {
-            ShowHUDMessage("Error transferring items: " + e, true);
-        }
-    }
-
-    public function scrapItemsCallback(): void {
-        try {
-            if (!this.parentClip.m_isWorkbench) {
-                ShowHUDMessage("Items auto scrap allowed only on workbenches!", true);
-                return;
-            }
-            _itemWorker.playerInventory = this.parentClip.PlayerInventory_mc.ItemList_mc.List_mc.MenuListData;
-            _itemWorker.config = config;
-            _itemWorker.scrapItems();
-        } catch (e:Error) {
-            ShowHUDMessage("Error scrapping items: " + e, true);
+            Logger.get().error(e);
         }
     }
 
@@ -190,16 +42,24 @@ public class InventOmaticStash extends MovieClip {
     public function setParent(parent:MovieClip):void {
         Logger.get().debug("Mod Initializing");
         this._parent = parent;
-        this._itemWorker = new ItemWorker();
-        this.buttonHintBar = _parent.ButtonHintBar_mc;
-        loadConfig();
+        setTimeout(loadConfigAndInit, 1000);
+        /*
+         BSUIDataManager.Subscribe("PlayerInventoryData",this.onPlayerInventoryDataUpdate);
+         BSUIDataManager.Subscribe("OtherInventoryTypeData",this.onOtherInvTypeDataUpdate);
+         BSUIDataManager.Subscribe("OtherInventoryData",this.onOtherInvDataUpdate);
+         BSUIDataManager.Subscribe("MyOffersData",this.onMyOffersDataUpdate);
+         BSUIDataManager.Subscribe("TheirOffersData",this.onTheirOffersDataUpdate);
+         BSUIDataManager.Subscribe("CharacterInfoData",this.onCharacterInfoDataUpdate);
+         BSUIDataManager.Subscribe("ContainerOptionsData",this.onContainerOptionsDataUpdate);
+         BSUIDataManager.Subscribe("CampVendingOfferData",this.onCampVendingOfferDataUpdate);
+         BSUIDataManager.Subscribe("FireForgetEvent",this.onFFEvent);
+         BSUIDataManager.Subscribe("AccountInfoData",this.onAccountInfoUpdate);
+         BSUIDataManager.Subscribe("InventoryItemCardData",this.onInventoryItemCardDataUpdate);
+         BSUIDataManager.Subscribe("HUDModeData",this.onHudModeDataUpdate);
+         */
     }
 
-    public function isSfeDefined():Boolean {
-        return this._parent.__SFCodeObj != null && this._parent.__SFCodeObj.call != null;
-    }
-
-    private function loadConfig():void {
+    private function loadConfigAndInit():void {
         try {
             Logger.get().debug("Loading config file");
             var url:URLRequest = new URLRequest("../inventOmaticStashConfigNew.json");
@@ -209,18 +69,7 @@ public class InventOmaticStash extends MovieClip {
 
             function loaderComplete(e:Event):void {
                 var jsonData:Object = new JSONDecoder(loader.data, true).getValue();
-                config = jsonData;
-                if (config.extractConfig && config.extractConfig.enabled) {
-                    if (!isSfeDefined()) {
-                        ShowHUDMessage("SFE not found, extract disabled!", true);
-                        Logger.get().error("SFE not found, extract disabled!");
-                        config.extractConfig.enabled = false;
-                    } else {
-                        var consumer:InventoryConsumer = new InventoryConsumer(_parent.__SFCodeObj, config.extractConfig);
-                        _itemExtractor = new ItemExtractor(consumer, config.extractConfig);
-                        _priceCheckItemExtractor = new VendorPriceCheckExtractor(consumer, config.extractConfig);
-                    }
-                }
+                config = mergeDefaultConfig(jsonData);
                 Logger.get().debugMode = config.debug;
                 Logger.get().debug("Config file is loaded!");
                 init();
@@ -231,19 +80,46 @@ public class InventOmaticStash extends MovieClip {
         }
     }
 
-    public function get parentClip():MovieClip {
-        return _parent;
+    private function mergeDefaultConfig(loadedConfig:Object):InventOmaticStashConfig {
+        return new InventOmaticStashConfig(loadedConfig);
     }
 
-    private function keyUpHandler(e:KeyboardEvent):void {
-        if (config.extractConfig && config.extractConfig.enabled && e.keyCode == config.extractConfig.keyCode) {
-            extractDataCallback();
-        } else if (config.transferConfig && config.transferConfig.enabled && e.keyCode == config.transferConfig.keyCode) {
-            transferItemsCallback();
-        } else if (config.scrapConfig && config.scrapConfig.enabled && e.keyCode == config.scrapConfig.keyCode) {
-            scrapItemsCallback();
-        } else if (config.devToolsConfig && config.devToolsConfig.enabled && e.keyCode == config.devToolsConfig.keyCode) {
-            devToolsDebugCallback();
+    private function init():void {
+
+        if (_parent.ButtonHintBar_mc == null) {
+            ShowHUDMessage("Unexpected error while adding buttons!");
+            Logger.get().error("Error getting button hint bar from parent.");
+            return;
+        }
+
+        this.modules = [
+            new ExtractorModule(_parent, config.extractConfig),
+            new TransferModule(_parent, config.transferConfig),
+            new ScrapModule(_parent, config.scrapConfig),
+            new DevToolsModule(_parent.__SFCodeObj, config.devToolsConfig)
+        ];
+        try {
+            var buttons:Vector.<BSButtonHintData> = _parent.ButtonHintDataV;
+            for (var i:int = 0; i < 4; i++) {
+                var module:BaseModule = modules[i];
+                if (module.active) {
+                    Logger.get().debug("module " + module.buttonText + " is active, adding button/key-listener");
+                    module.registerKeyUpListener(stage);
+                    var hint:BSButtonHintData = module.getButtonHint();
+                    if (hint) {
+                        buttons.push(hint);
+                    }
+                } else {
+                    Logger.get().debug("module " + module.buttonText + " is not active");
+                }
+            }
+
+            _parent.ButtonHintBar_mc.SetButtonHintData(buttons);
+            _parent.ButtonHintBar_mc.onRemovedFromStage();
+            _parent.ButtonHintBar_mc.onAddedToStage();
+            _parent.ButtonHintBar_mc.redrawDisplayObject();
+        } catch (e:Error) {
+            Logger.get().errorHandler("Error init buttons", e);
         }
     }
 

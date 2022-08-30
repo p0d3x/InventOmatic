@@ -9,22 +9,14 @@ import flash.events.IOErrorEvent;
 import flash.events.TimerEvent;
 import flash.utils.Timer;
 
-public class ExtendedSocket extends MovieClip implements IEventDispatcher
-{
-
+public class ExtendedSocket extends MovieClip implements IEventDispatcher {
 
     public var sfCodeObject = null;
-
     public var prevBytesAvailable:uint = 0;
-
     public var bytesAvailable:uint = 0;
-
     public var connected:Boolean = false;
-
     private var connectTimer:Timer;
-
     private var dataTimer:Timer;
-
     private var connectCalled:Boolean = false;
 
     public function ExtendedSocket(param1:*)

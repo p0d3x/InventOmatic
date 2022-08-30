@@ -1,8 +1,9 @@
 package extractors {
-import Shared.AS3.SecureTradeShared;
 
 import flash.display.MovieClip;
 import flash.utils.setTimeout;
+
+import modules.ExtractorModuleConfig;
 
 public class VendorPriceCheckExtractor extends BaseItemExtractor {
 
@@ -10,7 +11,7 @@ public class VendorPriceCheckExtractor extends BaseItemExtractor {
 
     protected var accountName:String;
 
-    public function VendorPriceCheckExtractor(consumer:InventoryConsumer, config:*) {
+    public function VendorPriceCheckExtractor(consumer:InventoryConsumer, config:ExtractorModuleConfig) {
         super(MOD_NAME, Version.VENDOR, consumer, config);
         var vendorData = GameApiDataExtractor.getApiData(GameApiDataExtractor.OtherInventoryTypeData);
         if (vendorData && vendorData.defaultHeaderText) {
@@ -38,12 +39,6 @@ public class VendorPriceCheckExtractor extends BaseItemExtractor {
             populateItemCardEntries(stashInventory);
             extractItems();
         }, delay);
-    }
-
-    override public function isValidMode(menuMode:uint):Boolean {
-        return menuMode === SecureTradeShared.MODE_PLAYERVENDING
-                || menuMode === SecureTradeShared.MODE_NPCVENDING
-                || menuMode === SecureTradeShared.MODE_VENDING_MACHINE;
     }
 }
 }

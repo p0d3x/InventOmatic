@@ -5,6 +5,8 @@ import com.adobe.serialization.json.JSONEncoder;
 
 import flash.events.Event;
 
+import modules.ExtractorModuleConfig;
+
 import utils.Logger;
 
 public class InventoryConsumer {
@@ -17,7 +19,7 @@ public class InventoryConsumer {
     protected var port:int;
     protected var path:String;
 
-    public function InventoryConsumer(sfCodeObj:Object, config:*) {
+    public function InventoryConsumer(sfCodeObj:Object, config:ExtractorModuleConfig) {
         this.sfCodeObj = sfCodeObj;
         this.writeToFile = config.writeToFile;
         if (config.postTarget) {
@@ -67,8 +69,8 @@ public class InventoryConsumer {
 
         if (socket == null) {
             socket = new ExtendedSocket(sfCodeObj);
-            socket.addEventListener("ExtendedSocket::CONNECT",connectHandler);
-            socket.addEventListener("ExtendedSocket::SocketData",this.socketDataHandler);
+            socket.addEventListener("ExtendedSocket::CONNECT", connectHandler);
+            socket.addEventListener("ExtendedSocket::SocketData", socketDataHandler);
         }
         if (!socket.connected) {
             // parameters don't matter, host and port are hardcoded in dxgi.dll

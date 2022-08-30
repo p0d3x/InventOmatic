@@ -8,6 +8,8 @@ import com.adobe.serialization.json.JSONEncoder;
 import flash.display.MovieClip;
 import flash.utils.setTimeout;
 
+import modules.ExtractorModuleConfig;
+
 import utils.Logger;
 
 public class BaseItemExtractor {
@@ -22,7 +24,8 @@ public class BaseItemExtractor {
     protected var additionalItemDataForAll:Boolean = false;
     protected var inventoryConsumer:InventoryConsumer;
 
-    public function BaseItemExtractor(modName:String, version:Number, consumer:InventoryConsumer, config:*) {
+    public function BaseItemExtractor(modName:String, version:Number, consumer:InventoryConsumer,
+                                      config:ExtractorModuleConfig) {
         this.modName = modName;
         this.version = version;
         this.inventoryConsumer = consumer;
@@ -35,23 +38,7 @@ public class BaseItemExtractor {
     }
 
     public function setInventory(parent:MovieClip):void {
-        Logger.get().info("Starting gathering items data from inventory!");
-        var delay:Number = populateItemCards(parent, parent.PlayerInventory_mc, false, playerInventory);
-        setTimeout(function ():void {
-            Logger.get().info("Starting gathering items data from stash!");
-            var delay2:Number = populateItemCards(parent, parent.OfferInventory_mc, true, stashInventory);
-            setTimeout(function ():void {
-                Logger.get().info("Building output object...");
-                try {
-                    populateItemCardEntries(playerInventory);
-                    populateItemCardEntries(stashInventory);
-                    extractItems();
-                } catch (e:Error) {
-                    Logger.get().info("Error building output object " + e);
-                }
-            }, delay2);
-
-        }, delay);
+        // to be implemented by subclasses
     }
 
     protected function populateItemCardEntries(inventory:Array):void {
@@ -126,10 +113,6 @@ public class BaseItemExtractor {
             GlobalFunc.ShowHUDMessage('[' + modName + ' v' + version + '] ' + text);
         }
         Logger.get().debug(text);
-    }
-
-    public function isValidMode(menuMode:uint):Boolean {
-        return false;
     }
 
     private function onInventoryItemCardDataUpdate(eventData:FromClientDataEvent):void {

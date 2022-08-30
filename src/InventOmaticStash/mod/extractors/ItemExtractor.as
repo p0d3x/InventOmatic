@@ -1,9 +1,16 @@
 package extractors {
+import flash.display.MovieClip;
+import flash.utils.setTimeout;
+
+import modules.ExtractorModuleConfig;
+
+import utils.Logger;
+
 public class ItemExtractor extends BaseItemExtractor {
 
     public static const MOD_NAME:String = "Invent-O-Matic-Extractor";
 
-    public function ItemExtractor(consumer:InventoryConsumer, config:*) {
+    public function ItemExtractor(consumer:InventoryConsumer, config:ExtractorModuleConfig) {
         super(MOD_NAME, Version.ITEM_EXTRACTOR, consumer, config);
     }
 
@@ -29,8 +36,24 @@ public class ItemExtractor extends BaseItemExtractor {
         return outputObject;
     }
 
-    override public function isValidMode(menuMode:uint):Boolean {
-        return true;
+    public override function setInventory(parent:MovieClip):void {
+        Logger.get().info("Starting gathering items data from inventory!");
+        var delay:Number = populateItemCards(parent, parent.PlayerInventory_mc, false, playerInventory);
+        setTimeout(function ():void {
+            Logger.get().info("Starting gathering items data from stash!");
+            var delay2:Number = populateItemCards(parent, parent.OfferInventory_mc, true, stashInventory);
+            setTimeout(function ():void {
+                Logger.get().info("Building output object...");
+                try {
+                    populateItemCardEntries(playerInventory);
+                    populateItemCardEntries(stashInventory);
+                    extractItems();
+                } catch (e:Error) {
+                    Logger.get().info("Error building output object " + e);
+                }
+            }, delay2);
+
+        }, delay);
     }
 }
 }
