@@ -4,6 +4,7 @@ import Shared.AS3.ExtendedSocket;
 import com.adobe.serialization.json.JSONEncoder;
 
 import flash.events.Event;
+import flash.utils.ByteArray;
 
 import modules.ExtractorModuleConfig;
 
@@ -81,7 +82,10 @@ public class InventoryConsumer {
             Logger.get().debug("posting inventory to server");
 
             var body = toString(data);
-            var bodyLength = body.length;
+            var b:ByteArray = new ByteArray();
+            b.writeUTFBytes(body);
+            var bodyLength = b.length;
+            Logger.get().debug("sending request with body length: " + bodyLength);
 
             socket.writeUTFBytes("POST " + path + " HTTP/1.1\n" +
                     "Content-Type: application/json\n" +

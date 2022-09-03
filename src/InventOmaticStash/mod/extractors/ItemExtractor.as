@@ -20,19 +20,19 @@ public class ItemExtractor extends BaseItemExtractor {
         var charData:Object = GameApiDataExtractor.getCharacterInfoData();
         var acData:Object = GameApiDataExtractor.getAccountInfoData();
 
-        var characterInventory:Object = {};
-        characterInventory.playerInventory = this.playerInventory;
-        characterInventory.stashInventory = this.stashInventory;
-        characterInventory.AccountInfoData = {
-            name: acData.name
-        };
-        characterInventory.CharacterInfoData = {
-            name: charData.name,
-            level: charData.level
+        outputObject.characterInventories = {};
+        outputObject.characterInventories[charData.name] = {
+            playerInventory: playerInventory,
+            stashInventory: stashInventory,
+            AccountInfoData: {
+                name: acData.name
+            },
+            CharacterInfoData: {
+                name: charData.name,
+                level: charData.level
+            }
         };
 
-        outputObject.characterInventories = {};
-        outputObject.characterInventories[charData.name] = characterInventory
         return outputObject;
     }
 
