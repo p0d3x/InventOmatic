@@ -34,7 +34,7 @@ public class InventOmaticStash extends MovieClip {
         try {
             Logger.init(this.debugLogger);
         } catch (e:Error) {
-            ShowHUDMessage("Error loading mod " + e, Logger.LOG_LEVEL_ERROR);
+            ShowHUDMessage(Logger.LOG_LEVEL_ERROR, "Error loading mod: {0}", e);
             Logger.get().error("Error loading mod: {0}", e);
         }
     }
@@ -63,7 +63,7 @@ public class InventOmaticStash extends MovieClip {
                 init();
             }
         } catch (e:Error) {
-            ShowHUDMessage(StringUtil.substitute("Failed to load config: {0}", e.message), Logger.LOG_LEVEL_ERROR);
+            ShowHUDMessage(Logger.LOG_LEVEL_ERROR, "Failed to load config: {0}", e.message);
             Logger.get().error("Failed to load config: {0}", e);
         }
     }
@@ -117,10 +117,14 @@ public class InventOmaticStash extends MovieClip {
         }
     }
 
-    public static function ShowHUDMessage(text:String, logLevel:int = 2):void {
-        if (logLevel >= Logger.get().logLevel) {
-            GlobalFunc.ShowHUDMessage(StringUtil.substitute("[Invent-O-Matic-Stash v{0}] {1}", Version.VERSION, text));
+    public static function ShowHUDMessage(logLevel:int, fmt:String, ... args):void {
+        if (logLevel < Logger.get().logLevel) {
+            return;
         }
+        args.unshift(fmt);
+        var line = StringUtil.substitute.apply(null, args);
+        var message = StringUtil.substitute("[Invent-O-Matic-Stash v{0}] {1}", Version.VERSION, line);
+        GlobalFunc.ShowHUDMessage(message);
     }
 }
 }

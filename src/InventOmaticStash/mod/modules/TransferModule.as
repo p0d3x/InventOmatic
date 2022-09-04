@@ -28,7 +28,7 @@ public class TransferModule extends BaseModule {
             itemWorker.config = TransferModuleConfig(config);
             itemWorker.transferItems();
         } catch (e:Error) {
-            InventOmaticStash.ShowHUDMessage(StringUtil.substitute("Error transferring items: {0}", e), Logger.LOG_LEVEL_ERROR);
+            InventOmaticStash.ShowHUDMessage(Logger.LOG_LEVEL_ERROR, "Error transferring items: {0}", e);
             Logger.get().error("Error transferring items: {0}", e);
         }
     }

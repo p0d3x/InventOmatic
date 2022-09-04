@@ -41,7 +41,7 @@ public class BaseItemExtractor {
     }
 
     public function extractFromSecureTrade(parent:MovieClip):void {
-        InventOmaticStash.ShowHUDMessage('extracting items!', Logger.LOG_LEVEL_INFO);
+        InventOmaticStash.ShowHUDMessage(Logger.LOG_LEVEL_INFO, 'extracting items!');
         Logger.get().info('extracting items!');
         pendingItemCardUpdates = [];
         if (usesInventory) {
@@ -62,8 +62,7 @@ public class BaseItemExtractor {
             var str:String = toString(object);
             return new JSONDecoder(str, true).getValue();
         } catch (e:Error) {
-            InventOmaticStash.ShowHUDMessage("Error cloning object: " + e, Logger.LOG_LEVEL_ERROR)
-            Logger.get().error("Error cloning object: {0}", e);
+            Logger.get().warn("Error cloning object: {0}", e);
         }
         return {};
     }
@@ -87,7 +86,7 @@ public class BaseItemExtractor {
             inventoryConsumer.accept(itemsModIni);
             Logger.get().debug('saved items!');
         } catch (e:Error) {
-            InventOmaticStash.ShowHUDMessage('Error extracting items(core): ' + e, Logger.LOG_LEVEL_ERROR);
+            InventOmaticStash.ShowHUDMessage(Logger.LOG_LEVEL_ERROR, 'Error extracting items(core): {0}', e);
             Logger.get().error('Error extracting items(core): {0}', e);
         }
     }
@@ -142,7 +141,7 @@ public class BaseItemExtractor {
         Logger.get().info("all pending item card updates received");
         fillItemCardEntries();
         saveOutput();
-        InventOmaticStash.ShowHUDMessage('done!', Logger.LOG_LEVEL_INFO);
+        InventOmaticStash.ShowHUDMessage(Logger.LOG_LEVEL_INFO, 'done!');
         Logger.get().info('done!');
     }
 

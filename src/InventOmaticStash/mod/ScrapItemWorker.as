@@ -54,8 +54,8 @@ public class ScrapItemWorker extends ItemWorker {
                 }
             });
             Logger.get().debug("Scrapped {0} items ({1} stacks)", totalScrapped, stacksScrapped);
-            InventOmaticStash.ShowHUDMessage(StringUtil.substitute("Scrapped {0} items ({1} stacks)",
-                    totalScrapped, stacksScrapped), Logger.LOG_LEVEL_INFO);
+            InventOmaticStash.ShowHUDMessage(Logger.LOG_LEVEL_INFO, "Scrapped {0} items ({1} stacks)",
+                    totalScrapped, stacksScrapped);
         } catch (e:Error) {
             Logger.get().error("Error ItemWorker scrap: {0}", e);
         }

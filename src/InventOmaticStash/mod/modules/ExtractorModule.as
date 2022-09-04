@@ -24,7 +24,6 @@ public class ExtractorModule extends BaseModule {
             return;
         }
         if (parent.__SFCodeObj == null || parent.__SFCodeObj.call == null) {
-            InventOmaticStash.ShowHUDMessage("SFE not found, extract disabled!", Logger.LOG_LEVEL_ERROR);
             Logger.get().error("SFE not found, extract disabled!");
             config.enabled = false;
             _active = false;
@@ -47,11 +46,12 @@ public class ExtractorModule extends BaseModule {
     protected override function execute():void {
         try {
             var extractor:BaseItemExtractor = extractorSupplier();
-            InventOmaticStash.ShowHUDMessage("Running extractor: " + extractor.getExtractorName());
+            InventOmaticStash.ShowHUDMessage(Logger.LOG_LEVEL_INFO, "Running extractor: {0}",
+                    extractor.getExtractorName());
             Logger.get().info("Running extractor: {0}", extractor.getExtractorName());
             extractor.extractFromSecureTrade(secureTrade);
         } catch (e:Error) {
-            InventOmaticStash.ShowHUDMessage("Error extracting items(init): " + e, Logger.LOG_LEVEL_ERROR);
+            InventOmaticStash.ShowHUDMessage(Logger.LOG_LEVEL_ERROR, "Error extracting items(init): {0}", e);
             Logger.get().error("Error extracting items(init): {0}", e);
         }
     }
