@@ -5,6 +5,8 @@ import extractors.GameApiDataExtractor;
 
 import modules.ScrapModuleConfig;
 
+import mx.utils.StringUtil;
+
 import utils.Logger;
 
 public class ScrapItemWorker extends ItemWorker {
@@ -37,24 +39,25 @@ public class ScrapItemWorker extends ItemWorker {
         try {
             var totalScrapped:int = 0;
             var stacksScrapped:int = 0;
-            Logger.get().debug("checking " + inventory.length + " for items to scrap, limits: "
-                    + _config.maxItems + ", " + _config.maxStacks);
+            Logger.get().debug("checking {0} for items to scrap, limits: {1}, {2}",
+                    inventory.length, _config.maxItems, _config.maxStacks);
             inventory.forEach(function (item:Object):void {
                 if ((_config.maxItems > 0 && totalScrapped >= _config.maxItems)
                         || (_config.maxStacks > 0 && stacksScrapped >= _config.maxStacks)) {
                     return;
                 }
                 if (!item.isLegendary && shouldScrap(item)) {
-                    Logger.get().debug("Going to scrap: " + item.text);
+                    Logger.get().debug("Going to scrap: {0}", item.text);
                     GameApiDataExtractor.scrapItem(item);
                     totalScrapped += item.count;
                     stacksScrapped++;
                 }
             });
-            Logger.get().debug("Scrapped " + totalScrapped + " items (" + stacksScrapped + "stacks)");
-            GlobalFunc.ShowHUDMessage("Scrapped " + totalScrapped + " items (" + stacksScrapped + "stacks)");
+            Logger.get().debug("Scrapped {0} items ({1} stacks)", totalScrapped, stacksScrapped);
+            InventOmaticStash.ShowHUDMessage(StringUtil.substitute("Scrapped {0} items ({1} stacks)",
+                    totalScrapped, stacksScrapped), Logger.LOG_LEVEL_INFO);
         } catch (e:Error) {
-            Logger.get().errorHandler("Error ItemWorker scrap", e);
+            Logger.get().error("Error ItemWorker scrap: {0}", e);
         }
     }
 
@@ -70,13 +73,13 @@ public class ScrapItemWorker extends ItemWorker {
             for (var i:int = 0; i < _config.excluded.length; i++) {
                 var configItemName:String = _config.excluded[i].toLowerCase();
                 if (isMatchingString(itemName, configItemName, MatchMode.CONTAINS)) {
-                    Logger.get().info(itemName + " matches exclusion: " + configItemName);
+                    Logger.get().info("{0} matches exclusion: {1}", itemName, configItemName);
                     return false;
                 }
             }
             return true;
         } catch (e:Error) {
-            Logger.get().errorHandler("Error checking items for scrapping", e);
+            Logger.get().error("Error checking items for scrapping: {0}", e);
         }
         return false;
     }
@@ -90,7 +93,7 @@ public class ScrapItemWorker extends ItemWorker {
             }
             return matchingFilterFlags.indexOf(item.filterFlag) !== -1;
         } catch (e:Error) {
-            Logger.get().errorHandler("Error checking type for scrap", e);
+            Logger.get().error("Error checking type for scrap: {0}", e);
         }
         return false;
     }

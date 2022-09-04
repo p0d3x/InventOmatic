@@ -1,6 +1,5 @@
 package modules {
 import Shared.AS3.SecureTradeShared;
-import Shared.GlobalFunc;
 
 import extractors.BaseItemExtractor;
 
@@ -14,7 +13,7 @@ import utils.Logger;
 
 public class ExtractorModule extends BaseModule {
 
-    private var extractor:BaseItemExtractor;
+    private var extractorSupplier:Function;
     private var secureTrade:MovieClip;
 
     public function ExtractorModule(parent:MovieClip, config:ExtractorModuleConfig) {
@@ -25,37 +24,35 @@ public class ExtractorModule extends BaseModule {
             return;
         }
         if (parent.__SFCodeObj == null || parent.__SFCodeObj.call == null) {
-            ShowHUDMessage("SFE not found, extract disabled!", true);
+            InventOmaticStash.ShowHUDMessage("SFE not found, extract disabled!", Logger.LOG_LEVEL_ERROR);
             Logger.get().error("SFE not found, extract disabled!");
             config.enabled = false;
             _active = false;
             return;
         }
 
-        var consumer:InventoryConsumer = new InventoryConsumer(parent.__SFCodeObj, config);
-        switch (parent.m_MenuMode) {
-            case SecureTradeShared.MODE_PLAYERVENDING:
-            case SecureTradeShared.MODE_NPCVENDING:
-            case SecureTradeShared.MODE_VENDING_MACHINE:
-                extractor = new VendorPriceCheckExtractor(consumer, config);
-                break;
-            default:
-                extractor = new ItemExtractor(consumer, config);
+        extractorSupplier = function():BaseItemExtractor {
+            var consumer:InventoryConsumer = new InventoryConsumer(parent.__SFCodeObj, config);
+            switch (parent.m_MenuMode) {
+                case SecureTradeShared.MODE_PLAYERVENDING:
+                case SecureTradeShared.MODE_NPCVENDING:
+                case SecureTradeShared.MODE_VENDING_MACHINE:
+                    return new VendorPriceCheckExtractor(consumer, config);
+                default:
+                    return new ItemExtractor(consumer, config);
+            }
         }
     }
 
     protected override function execute():void {
         try {
-            ShowHUDMessage("Running extractor: " + extractor.getExtractorName());
-            extractor.setInventory(secureTrade);
+            var extractor:BaseItemExtractor = extractorSupplier();
+            InventOmaticStash.ShowHUDMessage("Running extractor: " + extractor.getExtractorName());
+            Logger.get().info("Running extractor: {0}", extractor.getExtractorName());
+            extractor.extractFromSecureTrade(secureTrade);
         } catch (e:Error) {
-            ShowHUDMessage("Error extracting items(init): " + e, true);
-        }
-    }
-
-    public static function ShowHUDMessage(text:String, force:Boolean = false):void {
-        if (Logger.DEBUG_MODE || force) {
-            GlobalFunc.ShowHUDMessage("[Invent-O-Matic-Stash v" + Version.LOADER + "] " + text);
+            InventOmaticStash.ShowHUDMessage("Error extracting items(init): " + e, Logger.LOG_LEVEL_ERROR);
+            Logger.get().error("Error extracting items(init): {0}", e);
         }
     }
 }

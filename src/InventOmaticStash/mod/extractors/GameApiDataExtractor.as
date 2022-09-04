@@ -84,9 +84,9 @@ public class GameApiDataExtractor {
             var data:Object = GameApiDataExtractor.getFullApiData(apiMethods);
             var str = toString(data);
             sfCodeObj.call('writeItemsModFile', str);
-            Logger.get().info("wrote api methods to file," + str.length + " bytes");
+            Logger.get().info("wrote api methods to file, {0} characters", str.length);
         } catch (e:Error) {
-            Logger.get().errorHandler("failed to extract api data", e);
+            Logger.get().error("failed to extract api data: {0}", e);
         }
     }
 
@@ -110,7 +110,6 @@ public class GameApiDataExtractor {
         try {
             return BSUIDataManager.GetDataFromClient(input).data;
         } catch (e:Error) {
-
         }
         return {
             message: "Error extracting data for " + input

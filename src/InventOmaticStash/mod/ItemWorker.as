@@ -20,7 +20,7 @@ public class ItemWorker {
                 return true;
             }
         } catch (e:Error) {
-            Logger.get().errorHandler("Error checking string match mode", e);
+            Logger.get().error("Error checking string match mode: {0}", e);
         }
         return false;
     }

@@ -1,7 +1,5 @@
 package extractors {
 import Shared.AS3.Data.FromClientDataEvent;
-import Shared.GlobalFunc;
-
 import com.adobe.serialization.json.JSONDecoder;
 import com.adobe.serialization.json.JSONEncoder;
 
@@ -14,110 +12,163 @@ import utils.Logger;
 
 public class BaseItemExtractor {
 
-    protected var playerInventory:Array = [];
-    protected var stashInventory:Array = [];
-    protected var version:Number;
     protected var modName:String;
-    protected static var itemCardEntries:Object = {};
-    protected static var DEFAULT_DELAY:Number = 1000;
-    protected static var ITEM_CARD_ENTRY_DELAY_STEP:Number = 100;
     protected var additionalItemDataForAll:Boolean = false;
     protected var inventoryConsumer:InventoryConsumer;
 
-    public function BaseItemExtractor(modName:String, version:Number, consumer:InventoryConsumer,
-                                      config:ExtractorModuleConfig) {
+    protected var pendingItemCardUpdates:Array = [];
+    protected var itemCardEntries:Object = {};
+    protected var waitingForUpdates:Boolean = false;
+
+    protected var usesInventory:Boolean = false;
+    protected var playerInventory:Array = [];
+
+    protected var usesContainer:Boolean = false;
+    protected var stashInventory:Array = [];
+
+    public function BaseItemExtractor(modName:String, consumer:InventoryConsumer, config:ExtractorModuleConfig,
+                                      usesInventory:Boolean, usesContainer:Boolean) {
         this.modName = modName;
-        this.version = version;
-        this.inventoryConsumer = consumer;
         this.additionalItemDataForAll = config.additionalItemDataForAll;
+        this.inventoryConsumer = consumer;
+        this.usesInventory = usesInventory;
+        this.usesContainer = usesContainer;
         GameApiDataExtractor.subscribeInventoryItemCardData(onInventoryItemCardDataUpdate);
     }
 
     public function getExtractorName():String {
-        return modName + ' v' + version;
+        return modName + ' v' + Version.VERSION;
     }
 
-    public function setInventory(parent:MovieClip):void {
-        // to be implemented by subclasses
+    public function extractFromSecureTrade(parent:MovieClip):void {
+        InventOmaticStash.ShowHUDMessage('extracting items!', Logger.LOG_LEVEL_INFO);
+        Logger.get().info('extracting items!');
+        pendingItemCardUpdates = [];
+        if (usesInventory) {
+            Logger.get().debug("gathering items data from player inventory!");
+            playerInventory = collectItems(parent, parent.PlayerInventory_mc, false);
+        }
+        if (usesContainer) {
+            Logger.get().debug("gathering items data from offer inventory or container!");
+            stashInventory = collectItems(parent, parent.OfferInventory_mc, true);
+        }
+        Logger.get().debug("collecting item card data for {0} items", pendingItemCardUpdates.length);
+        waitingForUpdates = true;
+        populateCardsAndExtract();
     }
 
-    protected function populateItemCardEntries(inventory:Array):void {
-        inventory.forEach(function (item:Object):void {
-            if (itemCardEntries[item.serverHandleId]) {
-                item.ItemCardEntries = itemCardEntries[item.serverHandleId].itemCardEntries;
-            }
-        });
-    }
-
-    protected function populateItemCards(parent:MovieClip, inventory:SecureTradeInventory,
-            fromContainer:Boolean, output:Array):Number {
-        var inv:Array = inventory.ItemList_mc.List_mc.MenuListData;
-        var delay:Number = ITEM_CARD_ENTRY_DELAY_STEP;
-        inv.forEach(function (item:Object):void {
-            item.ItemCardEntries = [];
-            if (item.isLegendary || additionalItemDataForAll) {
-                setTimeout(function ():void {
-                    try {
-                        parent.selectedList = inventory;
-                        inventory.Active = true;
-                        GameApiDataExtractor.selectItem(item.serverHandleId, fromContainer);
-                        var itemCardData:Object = clone(GameApiDataExtractor.getInventoryItemCardData());
-                        itemCardEntries[itemCardData.serverHandleId] = itemCardData;
-                        output.push(item);
-                    } catch (e:Error) {
-                        Logger.get().errorHandler("Error getting data for item " + item.text, e)
-                    }
-                }, delay);
-                delay += ITEM_CARD_ENTRY_DELAY_STEP;
-            } else {
-                output.push(item);
-            }
-        });
-        return delay + DEFAULT_DELAY;
-    }
-
-    private function clone(object:Object):Object {
+    protected function clone(object:Object):Object {
         try {
             var str:String = toString(object);
             return new JSONDecoder(str, true).getValue();
         } catch (e:Error) {
-            ShowHUDMessage("Error cloning object: " + e)
+            InventOmaticStash.ShowHUDMessage("Error cloning object: " + e, Logger.LOG_LEVEL_ERROR)
+            Logger.get().error("Error cloning object: {0}", e);
         }
         return {};
     }
 
-    public function extractItems():void {
+    public function saveOutput():void {
         try {
-            ShowHUDMessage('Starting extracting items!');
-            var itemsModIni:Object = buildOutputObject();
+            Logger.get().debug('saving items!');
+            var itemsModIni:Object = {
+                modName: modName,
+                version: Version.VERSION,
+                characterInventories: {}
+            };
+            var characterData:Object = getCharacterData();
+            var accountData:Object = getAccountData();
+            itemsModIni.characterInventories[characterData.name] = {
+                playerInventory: playerInventory,
+                stashInventory: stashInventory,
+                AccountInfoData: accountData,
+                CharacterInfoData: characterData
+            };
             inventoryConsumer.accept(itemsModIni);
-            ShowHUDMessage('Done saving items!', true);
+            Logger.get().debug('saved items!');
         } catch (e:Error) {
-            ShowHUDMessage('Error extracting items(core): ' + e);
+            InventOmaticStash.ShowHUDMessage('Error extracting items(core): ' + e, Logger.LOG_LEVEL_ERROR);
+            Logger.get().error('Error extracting items(core): {0}', e);
         }
     }
 
-    public function buildOutputObject():Object {
-        return {
-            modName: modName,
-            version: version
-        };
+    protected function getCharacterData():Object {
+        return {};
+    }
+
+    protected function getAccountData():Object {
+        return {};
     }
 
     protected static function toString(obj:Object):String {
         return new JSONEncoder(obj).getString();
     }
 
-    public function ShowHUDMessage(text:String, force:Boolean = false):void {
-        if (Logger.DEBUG_MODE || force) {
-            GlobalFunc.ShowHUDMessage('[' + modName + ' v' + version + '] ' + text);
-        }
-        Logger.get().debug(text);
+    protected function collectItems(parent:MovieClip, inventory:SecureTradeInventory, fromContainer:Boolean):Array {
+        var inv:Array = inventory.ItemList_mc.List_mc.MenuListData;
+        var result:Array = inv.map(function (item:Object):Object {
+            item.ItemCardEntries = [];
+            if (!itemCardEntries[item.serverHandleId] && (item.isLegendary || additionalItemDataForAll)) {
+                pendingItemCardUpdates.push({
+                    id: item.serverHandleId,
+                    parentList: parent,
+                    inventory: inventory,
+                    fromContainer: fromContainer
+                });
+            }
+            return item;
+        });
+        return result;
     }
 
-    private function onInventoryItemCardDataUpdate(eventData:FromClientDataEvent):void {
+    protected function onInventoryItemCardDataUpdate(eventData:FromClientDataEvent):void {
         var data:Object = eventData.data;
+        Logger.get().trace("card update: {0}", data.serverHandleId);
         itemCardEntries[data.serverHandleId] = clone(data);
+        setTimeout(function ():void {
+            populateCardsAndExtract();
+        }, 0);
+    }
+
+    protected function populateCardsAndExtract():void {
+        if (!waitingForUpdates) {
+            return;
+        }
+        if (pendingItemCardUpdates.length > 0) {
+            selectNextPendingItem();
+            return;
+        }
+        waitingForUpdates = false;
+        Logger.get().info("all pending item card updates received");
+        fillItemCardEntries();
+        saveOutput();
+        InventOmaticStash.ShowHUDMessage('done!', Logger.LOG_LEVEL_INFO);
+        Logger.get().info('done!');
+    }
+
+    private function fillItemCardEntries():void {
+        stashInventory.forEach(function (item:Object):void {
+            if (itemCardEntries[item.serverHandleId]) {
+                item.ItemCardEntries = itemCardEntries[item.serverHandleId].itemCardEntries;
+            }
+        });
+        playerInventory.forEach(function (item:Object):void {
+            if (itemCardEntries[item.serverHandleId]) {
+                item.ItemCardEntries = itemCardEntries[item.serverHandleId].itemCardEntries;
+            }
+        });
+    }
+
+    private function selectNextPendingItem():void {
+        var pendingItem:* = pendingItemCardUpdates.pop();
+        try {
+            Logger.get().debug("selecting: {0}", pendingItem.id);
+            pendingItem.parentList.selectedList = pendingItem.inventory;
+            pendingItem.inventory.Active = true;
+            GameApiDataExtractor.selectItem(pendingItem.id, pendingItem.fromContainer);
+        } catch (e:Error) {
+            Logger.get().error("Error getting data for item {0}: {1}", pendingItem.id, e);
+        }
     }
 }
 }

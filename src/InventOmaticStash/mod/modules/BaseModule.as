@@ -1,6 +1,5 @@
 package modules {
 import Shared.AS3.BSButtonHintData;
-import Shared.GlobalFunc;
 
 import flash.display.Stage;
 
@@ -10,8 +9,6 @@ import flash.ui.Keyboard;
 
 import flash.utils.Dictionary;
 import flash.utils.describeType;
-
-import utils.Logger;
 
 public class BaseModule {
 
@@ -75,12 +72,6 @@ public class BaseModule {
         }
 
         return keyboardDict;
-    }
-
-    public static function ShowHUDMessage(text:String, force:Boolean = false):void {
-        if (Logger.DEBUG_MODE || force) {
-            GlobalFunc.ShowHUDMessage("[Invent-O-Matic-Stash v" + Version.LOADER + "] " + text);
-        }
     }
 }
 }

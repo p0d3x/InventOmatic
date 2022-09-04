@@ -40,7 +40,7 @@ public class InventoryConsumer {
             try {
                 sendDataChatMod(itemsModIni);
             } catch (e:Error) {
-                Logger.get().errorHandler("Sending items failed: ", e);
+                Logger.get().error("Sending items failed: {0}", e);
                 error = e;
             }
         }
@@ -48,7 +48,7 @@ public class InventoryConsumer {
             try {
                 writeData(itemsModIni);
             } catch (e:Error) {
-                Logger.get().errorHandler("writing items failed: ", e);
+                Logger.get().error("writing items failed: {0}", e);
                 error = e;
             }
         }
@@ -101,17 +101,7 @@ public class InventoryConsumer {
     }
 
     private function socketDataHandler(param1:Event) : void {
-        var rcvByte:* = undefined;
-        var responseText:String = "";
-        while (this.socket.bytesAvailable > 0) {
-            // TODO check this section, I have no idea how it parses the code points
-            if ((rcvByte = this.socket.readByte()) < 0 && rcvByte != -62) {
-                rcvByte = parseInt(this.toTwosComplement(rcvByte,1,2000));
-            } else if(rcvByte == -62) {
-                continue;
-            }
-            responseText += String.fromCharCode(rcvByte);
-        }
+        var responseText:String = readUTFStringFromSocket();
         Logger.get().debug("rcv:");
         var responseLines:Array = responseText.split("\r\n");
         var curLineNum:int = 0;
@@ -120,7 +110,7 @@ public class InventoryConsumer {
         var body:String = "";
         var code:int = 0;
         var length:int = 0;
-        while(curLineNum < responseLines.length) {
+        while (curLineNum < responseLines.length) {
             var curLine:String = responseLines[curLineNum];
             Logger.get().debug(curLine);
             if (curLine.length == 0) {
@@ -137,8 +127,23 @@ public class InventoryConsumer {
             }
             curLineNum++;
         }
-        Logger.get().debug("Response: " + code + ", Length: " + length + ", Body: " + body);
+        Logger.get().debug("Response: {0}, Length: {1}, Body: {2}", code, length, body);
         this.socket.close();
+    }
+
+    private function readUTFStringFromSocket():String {
+        var rcvByte:* = undefined;
+        var responseText:String = "";
+        while (this.socket.bytesAvailable > 0) {
+            // TODO check this section, I have no idea how it parses the code points
+            if ((rcvByte = this.socket.readByte()) < 0 && rcvByte != -62) {
+                rcvByte = parseInt(this.toTwosComplement(rcvByte, 1, 2000));
+            } else if (rcvByte == -62) {
+                continue;
+            }
+            responseText += String.fromCharCode(rcvByte);
+        }
+        return responseText;
     }
 
     private function toTwosComplement(param1:*, param2:*, param3:*) : *

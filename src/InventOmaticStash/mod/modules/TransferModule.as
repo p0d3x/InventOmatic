@@ -1,5 +1,7 @@
 package modules {
 
+import mx.utils.StringUtil;
+
 import utils.Logger;
 
 public class TransferModule extends BaseModule {
@@ -26,7 +28,8 @@ public class TransferModule extends BaseModule {
             itemWorker.config = TransferModuleConfig(config);
             itemWorker.transferItems();
         } catch (e:Error) {
-            ShowHUDMessage("Error transferring items: " + e, true);
+            InventOmaticStash.ShowHUDMessage(StringUtil.substitute("Error transferring items: {0}", e), Logger.LOG_LEVEL_ERROR);
+            Logger.get().error("Error transferring items: {0}", e);
         }
     }
 }

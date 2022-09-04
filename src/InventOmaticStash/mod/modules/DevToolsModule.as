@@ -16,7 +16,7 @@ public class DevToolsModule extends BaseModule {
             return;
         }
         if (sfeCodeObj == null || sfeCodeObj.call == null) {
-            ShowHUDMessage("SFE not found, dev tools disabled!", true);
+            InventOmaticStash.ShowHUDMessage("SFE not found, dev tools disabled!", Logger.LOG_LEVEL_ERROR);
             Logger.get().error("SFE not found, extract disabled!");
             config.enabled = false;
             _active = false;

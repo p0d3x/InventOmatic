@@ -23,7 +23,8 @@ public class ScrapModule extends BaseModule {
             itemWorker.config = ScrapModuleConfig(config);
             itemWorker.scrapItems();
         } catch (e:Error) {
-            ShowHUDMessage("Error scrapping items: " + e, true);
+            InventOmaticStash.ShowHUDMessage("Error scrapping items: " + e, Logger.LOG_LEVEL_ERROR);
+            Logger.get().error("Error scrapping items: {0}", e);
         }
     }
 }

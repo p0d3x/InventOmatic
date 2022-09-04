@@ -1,12 +1,17 @@
 package {
+import flash.ui.Keyboard;
+
 import modules.DevToolsModuleConfig;
 import modules.ExtractorModuleConfig;
 import modules.ScrapModuleConfig;
 import modules.TransferModuleConfig;
 
-public class InventOmaticStashConfig {
+import utils.Logger;
 
+public class InventOmaticStashConfig {
     private var _debug:Boolean = false;
+    private var _logLevel:int = Logger.LOG_LEVEL_INFO;
+    private var _toggleDebugKeyCode:uint = Keyboard.SLASH;
     private var _extractConfig:ExtractorModuleConfig = new ExtractorModuleConfig();
     private var _transferConfig:TransferModuleConfig = new TransferModuleConfig();
     private var _scrapConfig:ScrapModuleConfig = new ScrapModuleConfig();
@@ -19,6 +24,8 @@ public class InventOmaticStashConfig {
             return;
         }
         debug = loadedConfig.debug;
+        toggleDebugKeyCode = loadedConfig.toggleDebugKeyCode ? loadedConfig.toggleDebugKeyCode : Keyboard.SLASH;
+        logLevelFromName(loadedConfig.logLevel);
         mergeExtractConfig(loadedConfig.extractConfig, loadedConfig);
         mergeTransferConfig(loadedConfig.transferConfig);
         mergeScrapConfig(loadedConfig.scrapConfig);
@@ -79,6 +86,42 @@ public class InventOmaticStashConfig {
 
     public function get debug():Boolean {
         return _debug;
+    }
+
+    public function get toggleDebugKeyCode():uint {
+        return _toggleDebugKeyCode;
+    }
+
+    public function set toggleDebugKeyCode(value:uint):void {
+        _toggleDebugKeyCode = value;
+    }
+
+    public function logLevelFromName(logLevel:String):void {
+        if (!logLevel) {
+            return;
+        }
+        switch (logLevel) {
+            case "TRACE":
+                _logLevel = Logger.LOG_LEVEL_TRACE;
+                break;
+            case "DEBUG":
+                _logLevel = Logger.LOG_LEVEL_DEBUG;
+                break;
+            case "INFO":
+                _logLevel = Logger.LOG_LEVEL_INFO;
+                break;
+            case "WARN":
+                _logLevel = Logger.LOG_LEVEL_WARN;
+                break;
+            case "ERROR":
+                _logLevel = Logger.LOG_LEVEL_ERROR;
+                break;
+        }
+        Logger.get().info("log level set to {0} ({1})", _logLevel, logLevel);
+    }
+
+    public function get logLevel():int {
+        return _logLevel;
     }
 
     public function get extractConfig():ExtractorModuleConfig {
