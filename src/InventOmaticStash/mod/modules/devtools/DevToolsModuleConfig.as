@@ -1,4 +1,6 @@
-package modules {
+package modules.devtools {
+import modules.*;
+
 public class DevToolsModuleConfig extends BaseModuleConfig {
     private var _apiMethods:Array;
     public function DevToolsModuleConfig() {

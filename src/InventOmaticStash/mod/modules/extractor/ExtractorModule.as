@@ -1,11 +1,13 @@
-package modules {
+package modules.extractor {
+import modules.*;
+
 import Shared.AS3.SecureTradeShared;
 
-import extractors.BaseItemExtractor;
+import modules.extractor.BaseItemExtractor;
 
-import extractors.InventoryConsumer;
-import extractors.ItemExtractor;
-import extractors.VendorPriceCheckExtractor;
+import modules.extractor.InventoryConsumer;
+import modules.extractor.ItemExtractor;
+import modules.extractor.VendorPriceCheckExtractor;
 
 import flash.display.MovieClip;
 

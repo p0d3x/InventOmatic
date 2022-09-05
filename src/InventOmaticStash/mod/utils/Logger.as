@@ -3,7 +3,6 @@ package utils {
 import com.adobe.serialization.json.JSON;
 
 import flash.text.TextField;
-import flash.utils.getQualifiedClassName;
 
 import mx.utils.StringUtil;
 

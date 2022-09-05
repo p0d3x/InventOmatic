@@ -1,22 +1,15 @@
-﻿package extractors {
+﻿package modules.devtools {
 import Shared.AS3.Data.BSUIDataManager;
 import Shared.AS3.Events.CustomEvent;
 
 import com.adobe.serialization.json.JSONEncoder;
 
-import modules.DevToolsModuleConfig;
-
 import utils.Logger;
 
 public class GameApiDataExtractor {
-    public static const EVENT_TRANSFER_ITEM:String = "Container::TransferItem";
     public static const EVENT_INSPECT_ITEM:String = "Container::InspectItem";
-    public static const EVENT_ITEM_SELECTED:String = "SecureTrade::OnItemSelected";
-    private static const EVENT_SCRAP_ITEM:String = "Workbench::ScrapItem";
-    public static var PlayerInventoryData:String = "PlayerInventoryData";
     public static var CharacterInfoData:String = "CharacterInfoData";
     public static var AccountInfoData:String = "AccountInfoData";
-    public static var InventoryItemCardData:String = "InventoryItemCardData";
     public static var OtherInventoryTypeData:String = "OtherInventoryTypeData";
     private static var GAME_API_METHODS:Array = [
         "FriendsContextMenuData",
@@ -94,7 +87,7 @@ public class GameApiDataExtractor {
         return new JSONEncoder(obj).getString();
     }
 
-    public static function getFullApiData(array:Array):Object {
+    private static function getFullApiData(array:Array):Object {
         var gameApiData:Object = {};
         if (array == null || array.length < 1) {
             Logger.get().debug("no api methods defined in config, using 'all'");
@@ -124,43 +117,10 @@ public class GameApiDataExtractor {
         return getApiData(CharacterInfoData);
     }
 
-    public static function getInventoryItemCardData():Object {
-        return getApiData(InventoryItemCardData);
-    }
-
     public static function inspectItem(serverHandleId:Number, fromContainer:Boolean):void {
         BSUIDataManager.dispatchEvent(new CustomEvent(EVENT_INSPECT_ITEM, {
             "serverHandleId": serverHandleId,
             "fromContainer": fromContainer
-        }));
-    }
-
-    public static function selectItem(serverHandleId:Number, fromContainer:Boolean):void {
-        BSUIDataManager.dispatchEvent(new CustomEvent(EVENT_ITEM_SELECTED, {
-            "serverHandleId": serverHandleId,
-            "isSelectionValid": true,
-            "fromContainer": fromContainer
-        }));
-    }
-
-    public static function subscribeInventoryItemCardData(callback:Function):void {
-        BSUIDataManager.Subscribe(InventoryItemCardData, callback);
-    }
-
-    // fromContainer = true, means moving items from pipboy to container
-    public static function transferItem(item:Object, fromContainer:Boolean = false):void {
-        BSUIDataManager.dispatchEvent(new CustomEvent(EVENT_TRANSFER_ITEM, {
-            "serverHandleId": item.serverHandleId,
-            "quantity": item.count,
-            "fromContainer": fromContainer
-        }));
-    }
-
-    public static function scrapItem(item:Object, amount:int = -1): void {
-        var quantity:int = amount === -1 ? item.count : amount;
-        BSUIDataManager.dispatchEvent(new CustomEvent(EVENT_SCRAP_ITEM, {
-            "serverHandleId": item.serverHandleId,
-            "quantity": quantity
         }));
     }
 }

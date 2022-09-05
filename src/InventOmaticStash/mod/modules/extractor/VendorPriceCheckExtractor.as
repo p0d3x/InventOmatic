@@ -1,6 +1,5 @@
-package extractors {
-
-import modules.ExtractorModuleConfig;
+package modules.extractor {
+import modules.devtools.GameApiDataExtractor;
 
 public class VendorPriceCheckExtractor extends BaseItemExtractor {
 

@@ -1,6 +1,5 @@
-package modules {
-
-import mx.utils.StringUtil;
+package modules.transfer {
+import modules.*;
 
 import utils.Logger;
 

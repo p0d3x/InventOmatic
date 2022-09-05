@@ -1,10 +1,11 @@
 package {
 import flash.ui.Keyboard;
 
-import modules.DevToolsModuleConfig;
-import modules.ExtractorModuleConfig;
-import modules.ScrapModuleConfig;
-import modules.TransferModuleConfig;
+import modules.devtools.DevToolsModuleConfig;
+import modules.extractor.ExtractorModuleConfig;
+import modules.market.MarketWatchModuleConfig;
+import modules.scrap.ScrapModuleConfig;
+import modules.transfer.TransferModuleConfig;
 
 import utils.Logger;
 
@@ -16,6 +17,7 @@ public class InventOmaticStashConfig {
     private var _transferConfig:TransferModuleConfig = new TransferModuleConfig();
     private var _scrapConfig:ScrapModuleConfig = new ScrapModuleConfig();
     private var _devToolsConfig:DevToolsModuleConfig = new DevToolsModuleConfig();
+    private var _marketWatchConfig:MarketWatchModuleConfig = new MarketWatchModuleConfig();
     // not yet implemented
     //private var _priceCheckConfig:ExtractorModuleConfig = new ExtractorModuleConfig();
 
@@ -30,6 +32,7 @@ public class InventOmaticStashConfig {
         mergeTransferConfig(loadedConfig.transferConfig);
         mergeScrapConfig(loadedConfig.scrapConfig);
         mergeDevToolsConfig(loadedConfig.devToolsConfig, loadedConfig);
+        mergeMarketWatchConfig(loadedConfig.marketWatchConfig);
     }
 
     private function mergeExtractConfig(extractConfig:Object, legacyConfig:Object):void {
@@ -62,9 +65,10 @@ public class InventOmaticStashConfig {
             return;
         }
         _scrapConfig.enabled = scrapConfig.enabled;
+        _scrapConfig.dryRun = scrapConfig.dryRun;
         _scrapConfig.maxItems = scrapConfig.maxItems;
         _scrapConfig.maxStacks = scrapConfig.maxStacks;
-        _scrapConfig.types = scrapConfig.types;
+        _scrapConfig.filterFlags = scrapConfig.types;
         _scrapConfig.excluded = scrapConfig.excluded;
         _scrapConfig.keyCode = scrapConfig.keyCode;
     }
@@ -77,6 +81,15 @@ public class InventOmaticStashConfig {
             _devToolsConfig.enabled = devToolsConfig.enabled;
             _devToolsConfig.apiMethods = devToolsConfig.apiMethods;
             _devToolsConfig.keyCode = devToolsConfig.keyCode;
+        }
+    }
+
+    private function mergeMarketWatchConfig(marketWatchConfig:Object):void {
+        if (!marketWatchConfig) {
+            _marketWatchConfig.enabled = false;
+        } else {
+            _marketWatchConfig.enabled = marketWatchConfig.enabled;
+            _marketWatchConfig.keyCode = marketWatchConfig.keyCode;
         }
     }
 
@@ -138,6 +151,10 @@ public class InventOmaticStashConfig {
 
     public function get devToolsConfig():DevToolsModuleConfig {
         return _devToolsConfig;
+    }
+
+    public function get marketWatchConfig():MarketWatchModuleConfig {
+        return _marketWatchConfig;
     }
 }
 }

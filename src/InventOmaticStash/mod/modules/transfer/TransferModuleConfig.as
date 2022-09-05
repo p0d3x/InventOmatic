@@ -1,4 +1,6 @@
-package modules {
+package modules.transfer {
+import modules.*;
+
 public class TransferModuleConfig extends BaseModuleConfig {
     private var _itemNames:Array;
     private var _matchMode:String;

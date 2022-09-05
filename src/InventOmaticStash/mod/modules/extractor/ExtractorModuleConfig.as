@@ -1,4 +1,6 @@
-package modules {
+package modules.extractor {
+import modules.*;
+
 public class ExtractorModuleConfig extends BaseModuleConfig {
 
     private var _additionalItemDataForAll:Boolean = false;

@@ -1,4 +1,4 @@
-package {
+package utils {
 public class MatchMode {
     public static const EXACT:String = "EXACT";
     public static const CONTAINS:String = "CONTAINS";

@@ -13,10 +13,11 @@ import flash.text.TextField;
 import flash.utils.setTimeout;
 
 import modules.BaseModule;
-import modules.DevToolsModule;
-import modules.ExtractorModule;
-import modules.ScrapModule;
-import modules.TransferModule;
+import modules.devtools.DevToolsModule;
+import modules.extractor.ExtractorModule;
+import modules.market.MarketWatchModule;
+import modules.scrap.ScrapModule;
+import modules.transfer.TransferModule;
 
 import mx.utils.StringUtil;
 
@@ -25,11 +26,13 @@ import utils.Logger;
 public class InventOmaticStash extends MovieClip {
 
     public var debugLogger:TextField;
+    public var BGSCodeObj:Object;
     protected var _parent:MovieClip;
     protected var config:InventOmaticStashConfig;
     protected var moduleArray:Array;
 
     public function InventOmaticStash() {
+        BGSCodeObj = new Object();
         super();
         try {
             Logger.init(this.debugLogger);
@@ -60,6 +63,7 @@ public class InventOmaticStash extends MovieClip {
                 Logger.get().debugWindowVisible(config.debug);
                 Logger.get().logLevel = config.logLevel;
                 Logger.get().debug("Config file is loaded!");
+                Logger.get().debug("BGSCodeObj: {0}", _parent.codeObj);
                 init();
             }
         } catch (e:Error) {
@@ -83,7 +87,8 @@ public class InventOmaticStash extends MovieClip {
             new ExtractorModule(_parent, config.extractConfig),
             new TransferModule(_parent, config.transferConfig),
             new ScrapModule(_parent, config.scrapConfig),
-            new DevToolsModule(_parent.__SFCodeObj, config.devToolsConfig)
+            new DevToolsModule(_parent.__SFCodeObj, config.devToolsConfig),
+            new MarketWatchModule(_parent.__SFCodeObj, config.marketWatchConfig)
         ];
         try {
             var buttons:Vector.<BSButtonHintData> = _parent.ButtonHintDataV;
@@ -102,7 +107,7 @@ public class InventOmaticStash extends MovieClip {
             }
             stage.addEventListener(KeyboardEvent.KEY_UP, function (e:*):void {
                 if (e.keyCode == config.toggleDebugKeyCode) { // '#' on german keyboard
-                    Logger.get().debug("toggle debug window");
+                    Logger.get().trace("toggle debug window");
                     Logger.get().toggleWindowVisible();
                     _parent.ButtonHintBar_mc.redrawDisplayObject();
                 }
@@ -122,8 +127,8 @@ public class InventOmaticStash extends MovieClip {
             return;
         }
         args.unshift(fmt);
-        var line = StringUtil.substitute.apply(null, args);
-        var message = StringUtil.substitute("[Invent-O-Matic-Stash v{0}] {1}", Version.VERSION, line);
+        var line:String = StringUtil.substitute.apply(null, args);
+        var message:String = StringUtil.substitute("[Invent-O-Matic-Stash v{0}] {1}", Version.VERSION, line);
         GlobalFunc.ShowHUDMessage(message);
     }
 }

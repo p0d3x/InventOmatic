@@ -10,6 +10,8 @@ import flash.ui.Keyboard;
 import flash.utils.Dictionary;
 import flash.utils.describeType;
 
+import utils.Logger;
+
 public class BaseModule {
 
     static var keyDict:Dictionary = getKeyboardDict();
@@ -57,7 +59,7 @@ public class BaseModule {
     }
 
     protected function execute():void {
-        // to be implemented by subclasses
+        Logger.get().error("execute() not implemented!"); // to be implemented by subclasses
     }
 
     static function getKeyboardDict():Dictionary {

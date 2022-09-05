@@ -1,11 +1,9 @@
-package {
-import utils.Logger;
-
-public class ItemWorker {
-    public function ItemWorker() {
+package utils {
+public class MatchingUtil {
+    public function MatchingUtil() {
     }
 
-    protected function isMatchingString(itemName:String, stringToCompare:String, matchMode:String):Boolean {
+    public static function isMatchingString(itemName:String, stringToCompare:String, matchMode:String):Boolean {
         if (itemName.length < 1 || stringToCompare.length < 1) {
             return false;
         }

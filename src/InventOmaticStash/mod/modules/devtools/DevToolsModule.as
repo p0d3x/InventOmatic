@@ -1,21 +1,20 @@
-package modules {
-
-import extractors.GameApiDataExtractor;
+package modules.devtools {
+import modules.*;
 
 import utils.Logger;
 
 public class DevToolsModule extends BaseModule {
 
-    private var sfeCodeObj:Object;
+    private var sfCodeObj:Object;
 
-    public function DevToolsModule(sfeCodeObj:Object, config:DevToolsModuleConfig) {
+    public function DevToolsModule(sfCodeObj:Object, config:DevToolsModuleConfig) {
         super(config);
-        this.sfeCodeObj = sfeCodeObj;
+        this.sfCodeObj = sfCodeObj;
         this._buttonText = "Extract API";
         if (!_active) {
             return;
         }
-        if (sfeCodeObj == null || sfeCodeObj.call == null) {
+        if (sfCodeObj == null || sfCodeObj.call == null) {
             Logger.get().error("SFE not found, extract disabled!");
             config.enabled = false;
             _active = false;
@@ -27,7 +26,7 @@ public class DevToolsModule extends BaseModule {
             Logger.get().error("DevTools disabled, cannot extract!");
             return;
         }
-        var devToolsExtractor:GameApiDataExtractor = new GameApiDataExtractor(sfeCodeObj, DevToolsModuleConfig(config));
+        var devToolsExtractor:GameApiDataExtractor = new GameApiDataExtractor(sfCodeObj, DevToolsModuleConfig(config));
         devToolsExtractor.extract();
     }
 }

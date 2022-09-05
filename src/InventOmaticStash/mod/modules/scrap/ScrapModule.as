@@ -1,4 +1,6 @@
-package modules {
+package modules.scrap {
+import modules.*;
+
 import utils.Logger;
 
 public class ScrapModule extends BaseModule {

@@ -1,16 +1,20 @@
-package extractors {
+package modules.extractor {
+
+import Shared.AS3.Data.BSUIDataManager;
 import Shared.AS3.Data.FromClientDataEvent;
+import Shared.AS3.Events.CustomEvent;
+
 import com.adobe.serialization.json.JSONDecoder;
 import com.adobe.serialization.json.JSONEncoder;
 
 import flash.display.MovieClip;
 import flash.utils.setTimeout;
 
-import modules.ExtractorModuleConfig;
-
 import utils.Logger;
 
 public class BaseItemExtractor {
+    public static var InventoryItemCardData:String = "InventoryItemCardData";
+    public static const EVENT_ITEM_SELECTED:String = "SecureTrade::OnItemSelected";
 
     protected var modName:String;
     protected var additionalItemDataForAll:Boolean = false;
@@ -33,7 +37,7 @@ public class BaseItemExtractor {
         this.inventoryConsumer = consumer;
         this.usesInventory = usesInventory;
         this.usesContainer = usesContainer;
-        GameApiDataExtractor.subscribeInventoryItemCardData(onInventoryItemCardDataUpdate);
+        BSUIDataManager.Subscribe(InventoryItemCardData, onInventoryItemCardDataUpdate);
     }
 
     public function getExtractorName():String {
@@ -164,7 +168,11 @@ public class BaseItemExtractor {
             Logger.get().debug("selecting: {0}", pendingItem.id);
             pendingItem.parentList.selectedList = pendingItem.inventory;
             pendingItem.inventory.Active = true;
-            GameApiDataExtractor.selectItem(pendingItem.id, pendingItem.fromContainer);
+            BSUIDataManager.dispatchEvent(new CustomEvent(EVENT_ITEM_SELECTED, {
+                "serverHandleId": pendingItem.id,
+                "isSelectionValid": true,
+                "fromContainer": pendingItem.fromContainer
+            }));
         } catch (e:Error) {
             Logger.get().error("Error getting data for item {0}: {1}", pendingItem.id, e);
         }

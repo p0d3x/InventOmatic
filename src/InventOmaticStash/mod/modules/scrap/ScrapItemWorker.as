@@ -1,15 +1,14 @@
-package {
-import Shared.GlobalFunc;
+package modules.scrap {
 
-import extractors.GameApiDataExtractor;
-
-import modules.ScrapModuleConfig;
-
-import mx.utils.StringUtil;
+import Shared.AS3.Data.BSUIDataManager;
+import Shared.AS3.Events.CustomEvent;
 
 import utils.Logger;
+import utils.MatchMode;
+import utils.MatchingUtil;
 
-public class ScrapItemWorker extends ItemWorker {
+public class ScrapItemWorker {
+    public static const EVENT_SCRAP_ITEM:String = "Workbench::ScrapItem";
     private var _playerInventory:Array = [];
     private var _config:ScrapModuleConfig = null;
 
@@ -22,7 +21,7 @@ public class ScrapItemWorker extends ItemWorker {
     }
 
     private function isValidScrapConfig():Boolean {
-        return _config && _config.enabled && _config.types && _config.types.length > 0;
+        return _config && _config.enabled && _config.filterFlags && _config.filterFlags.length > 0;
     }
 
     public function scrapItems():void {
@@ -48,7 +47,12 @@ public class ScrapItemWorker extends ItemWorker {
                 }
                 if (!item.isLegendary && shouldScrap(item)) {
                     Logger.get().debug("Going to scrap: {0}", item.text);
-                    GameApiDataExtractor.scrapItem(item);
+                    if (!_config.dryRun) {
+                        BSUIDataManager.dispatchEvent(new CustomEvent(EVENT_SCRAP_ITEM, {
+                            "serverHandleId": item.serverHandleId,
+                            "quantity": item.count
+                        }));
+                    }
                     totalScrapped += item.count;
                     stacksScrapped++;
                 }
@@ -66,14 +70,11 @@ public class ScrapItemWorker extends ItemWorker {
             return false;
         }
         try {
-            if (!_config.excluded || _config.excluded.length == 0) {
-                return true;
-            }
             var itemName:String = item.text.toLowerCase();
             for (var i:int = 0; i < _config.excluded.length; i++) {
                 var configItemName:String = _config.excluded[i].toLowerCase();
-                if (isMatchingString(itemName, configItemName, MatchMode.CONTAINS)) {
-                    Logger.get().info("{0} matches exclusion: {1}", itemName, configItemName);
+                if (MatchingUtil.isMatchingString(itemName, configItemName, MatchMode.CONTAINS)) {
+                    Logger.get().debug("{0} matches exclusion: {1}", itemName, configItemName);
                     return false;
                 }
             }
@@ -85,17 +86,9 @@ public class ScrapItemWorker extends ItemWorker {
     }
 
     private function isValidTypeToScrap(item:Object):Boolean {
-        try {
-            var types:Array = _config.types;
-            var matchingFilterFlags:Array = [];
-            for (var i:int = 0; i < types.length; i++) {
-                matchingFilterFlags = matchingFilterFlags.concat(matchingFilterFlags, ItemTypes.ITEM_TYPES[types[i]]);
-            }
-            return matchingFilterFlags.indexOf(item.filterFlag) !== -1;
-        } catch (e:Error) {
-            Logger.get().error("Error checking type for scrap: {0}", e);
-        }
-        return false;
+        return _config.filterFlags.some(function (arg:uint):Boolean {
+            return (item.filterFlag & arg) != 0;
+        });
     }
 }
 }

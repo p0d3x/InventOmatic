@@ -1,10 +1,12 @@
-package {
+package modules.transfer {
 
-import extractors.GameApiDataExtractor;
+import Shared.AS3.Data.BSUIDataManager;
+import Shared.AS3.Events.CustomEvent;
 
-import modules.TransferModuleConfig;
+import utils.MatchingUtil;
 
-public class TransferItemWorker extends ItemWorker {
+public class TransferItemWorker {
+    public static const EVENT_TRANSFER_ITEM:String = "Container::TransferItem";
     public static const DIRECTION_TO_CONTAINER:String = "TO_CONTAINER";
     public static const DIRECTION_FROM_CONTAINER:String = "FROM_CONTAINER";
     private var _playerInventory:Array = [];
@@ -45,7 +47,12 @@ public class TransferItemWorker extends ItemWorker {
         }
         inventory.forEach(function (item:Object):void {
             if (isMatchingItemName(item.text)) {
-                GameApiDataExtractor.transferItem(item, fromContainer);
+                // fromContainer = true, means moving items from pipboy to container
+                BSUIDataManager.dispatchEvent(new CustomEvent(EVENT_TRANSFER_ITEM, {
+                    "serverHandleId": item.serverHandleId,
+                    "quantity": item.count,
+                    "fromContainer": fromContainer
+                }));
             }
         });
     }
@@ -59,7 +66,7 @@ public class TransferItemWorker extends ItemWorker {
         var itemName:String = item.toLowerCase();
         for (var i:int = 0; i < _config.itemNames.length; i++) {
             var configItemName:String = _config.itemNames[i].toLowerCase();
-            if (isMatchingString(itemName, configItemName, matchMode)) {
+            if (MatchingUtil.isMatchingString(itemName, configItemName, matchMode)) {
                 return true;
             }
         }
