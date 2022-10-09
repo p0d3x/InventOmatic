@@ -15,7 +15,7 @@ import flash.utils.setTimeout;
 import modules.BaseModule;
 import modules.devtools.DevToolsModule;
 import modules.extractor.ExtractorModule;
-import modules.market.MarketWatchModule;
+import modules.market.SelectedItemPriceCheckModule;
 import modules.scrap.ScrapModule;
 import modules.transfer.TransferModule;
 
@@ -26,13 +26,11 @@ import utils.Logger;
 public class InventOmaticStash extends MovieClip {
 
     public var debugLogger:TextField;
-    public var BGSCodeObj:Object;
     protected var _parent:MovieClip;
     protected var config:InventOmaticStashConfig;
     protected var moduleArray:Array;
 
     public function InventOmaticStash() {
-        BGSCodeObj = new Object();
         super();
         try {
             Logger.init(this.debugLogger);
@@ -59,7 +57,7 @@ public class InventOmaticStash extends MovieClip {
 
             function loaderComplete(e:Event):void {
                 var jsonData:Object = new JSONDecoder(loader.data, true).getValue();
-                config = mergeDefaultConfig(jsonData);
+                config = new InventOmaticStashConfig(jsonData);
                 Logger.get().debugWindowVisible(config.debug);
                 Logger.get().logLevel = config.logLevel;
                 Logger.get().debug("Config file is loaded!");
@@ -72,10 +70,6 @@ public class InventOmaticStash extends MovieClip {
         }
     }
 
-    private function mergeDefaultConfig(loadedConfig:Object):InventOmaticStashConfig {
-        return new InventOmaticStashConfig(loadedConfig);
-    }
-
     private function init():void {
 
         if (_parent.ButtonHintBar_mc == null) {
@@ -83,12 +77,14 @@ public class InventOmaticStash extends MovieClip {
             return;
         }
 
+        var priceCheckModule:SelectedItemPriceCheckModule
+                = new SelectedItemPriceCheckModule(_parent, config.priceCheckConfig);
         moduleArray = [
-            new ExtractorModule(_parent, config.extractConfig),
+            new ExtractorModule(_parent, config.extractConfig, priceCheckModule),
             new TransferModule(_parent, config.transferConfig),
             new ScrapModule(_parent, config.scrapConfig),
             new DevToolsModule(_parent.__SFCodeObj, config.devToolsConfig),
-            new MarketWatchModule(_parent.__SFCodeObj, config.marketWatchConfig)
+            priceCheckModule
         ];
         try {
             var buttons:Vector.<BSButtonHintData> = _parent.ButtonHintDataV;

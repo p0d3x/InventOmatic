@@ -3,7 +3,7 @@ import flash.ui.Keyboard;
 
 import modules.devtools.DevToolsModuleConfig;
 import modules.extractor.ExtractorModuleConfig;
-import modules.market.MarketWatchModuleConfig;
+import modules.market.SelectedItemPriceCheckModuleConfig;
 import modules.scrap.ScrapModuleConfig;
 import modules.transfer.TransferModuleConfig;
 
@@ -17,7 +17,7 @@ public class InventOmaticStashConfig {
     private var _transferConfig:TransferModuleConfig = new TransferModuleConfig();
     private var _scrapConfig:ScrapModuleConfig = new ScrapModuleConfig();
     private var _devToolsConfig:DevToolsModuleConfig = new DevToolsModuleConfig();
-    private var _marketWatchConfig:MarketWatchModuleConfig = new MarketWatchModuleConfig();
+    private var _priceCheckConfig:SelectedItemPriceCheckModuleConfig = new SelectedItemPriceCheckModuleConfig();
     // not yet implemented
     //private var _priceCheckConfig:ExtractorModuleConfig = new ExtractorModuleConfig();
 
@@ -32,7 +32,7 @@ public class InventOmaticStashConfig {
         mergeTransferConfig(loadedConfig.transferConfig);
         mergeScrapConfig(loadedConfig.scrapConfig);
         mergeDevToolsConfig(loadedConfig.devToolsConfig, loadedConfig);
-        mergeMarketWatchConfig(loadedConfig.marketWatchConfig);
+        mergeItemPriceCheckConfig(loadedConfig.priceCheckConfig);
     }
 
     private function mergeExtractConfig(extractConfig:Object, legacyConfig:Object):void {
@@ -84,12 +84,13 @@ public class InventOmaticStashConfig {
         }
     }
 
-    private function mergeMarketWatchConfig(marketWatchConfig:Object):void {
-        if (!marketWatchConfig) {
-            _marketWatchConfig.enabled = false;
+    private function mergeItemPriceCheckConfig(priceCheckConfig:Object):void {
+        if (!priceCheckConfig) {
+            _priceCheckConfig.enabled = false;
         } else {
-            _marketWatchConfig.enabled = marketWatchConfig.enabled;
-            _marketWatchConfig.keyCode = marketWatchConfig.keyCode;
+            _priceCheckConfig.enabled = priceCheckConfig.enabled;
+            _priceCheckConfig.keyCode = priceCheckConfig.keyCode;
+            _priceCheckConfig.postTarget = priceCheckConfig.postTarget;
         }
     }
 
@@ -153,8 +154,8 @@ public class InventOmaticStashConfig {
         return _devToolsConfig;
     }
 
-    public function get marketWatchConfig():MarketWatchModuleConfig {
-        return _marketWatchConfig;
+    public function get priceCheckConfig():SelectedItemPriceCheckModuleConfig {
+        return _priceCheckConfig;
     }
 }
 }
