@@ -2,11 +2,9 @@ package modules.market {
 
 import Shared.AS3.Data.BSUIDataManager;
 import Shared.AS3.Data.FromClientDataEvent;
-import Shared.AS3.Data.UIDataFromClient;
 import Shared.GlobalFunc;
 
 import com.adobe.serialization.json.JSONDecoder;
-
 import com.adobe.serialization.json.JSONEncoder;
 
 import flash.text.TextField;
@@ -16,7 +14,6 @@ import modules.BaseModule;
 import scaleform.gfx.TextFieldEx;
 
 import utils.HttpClient;
-
 import utils.Logger;
 
 public class SelectedItemPriceCheckModule extends BaseModule {
