@@ -39,6 +39,7 @@ public class InventOmaticStashConfig {
         if (!extractConfig) {
             _extractConfig.enabled = true;
             _extractConfig.additionalItemDataForAll = legacyConfig.additionalItemDataForAll;
+            _extractConfig.writeToFile = true;
         } else {
             _extractConfig.enabled = extractConfig.enabled;
             _extractConfig.additionalItemDataForAll = extractConfig.additionalItemDataForAll;

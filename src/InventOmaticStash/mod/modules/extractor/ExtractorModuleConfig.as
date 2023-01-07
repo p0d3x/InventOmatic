@@ -6,7 +6,7 @@ public class ExtractorModuleConfig extends BaseModuleConfig {
     private var _additionalItemDataForAll:Boolean = false;
     private var _postTarget:Object = null;
     private var _postToUrl:Boolean = false;
-    private var _writeToFile:Boolean = false;
+    private var _writeToFile:Boolean = true;
 
     public function ExtractorModuleConfig() {
         super(false, 79);

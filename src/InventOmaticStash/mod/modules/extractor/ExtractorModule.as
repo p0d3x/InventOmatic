@@ -3,12 +3,6 @@ import modules.*;
 
 import Shared.AS3.SecureTradeShared;
 
-import modules.extractor.BaseItemExtractor;
-
-import modules.extractor.InventoryConsumer;
-import modules.extractor.ItemExtractor;
-import modules.extractor.VendorPriceCheckExtractor;
-
 import flash.display.MovieClip;
 
 import modules.market.SelectedItemPriceCheckModule;
@@ -27,6 +21,7 @@ public class ExtractorModule extends BaseModule {
         _buttonText = "Extract Items";
         secureTrade = parent;
         priceCheckModule = pcModule;
+        _active = _active && !parent.m_isWorkbench;
         if (!_active) {
             return;
         }

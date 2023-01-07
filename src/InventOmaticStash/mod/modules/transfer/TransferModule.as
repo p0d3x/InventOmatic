@@ -1,4 +1,6 @@
 package modules.transfer {
+import Shared.AS3.SecureTradeShared;
+
 import modules.*;
 
 import utils.Logger;
@@ -13,6 +15,13 @@ public class TransferModule extends BaseModule {
         this._buttonText = "Transfer items";
         this.playerInventory = parent.PlayerInventory_mc;
         this.offerInventory = parent.OfferInventory_mc;
+        this._active = _active && !parent.m_isWorkbench
+                && (parent.m_MenuMode == SecureTradeShared.MODE_CONTAINER
+                        || parent.m_MenuMode == SecureTradeShared.MODE_FERMENTER
+                        || parent.m_MenuMode == SecureTradeShared.MODE_ALLY
+                        || parent.m_MenuMode == SecureTradeShared.MODE_CAMP_DISPENSER
+                        || parent.m_MenuMode == SecureTradeShared.MODE_DISPLAY_CASE
+                        || parent.m_MenuMode == SecureTradeShared.MODE_REFRIGERATOR);
     }
 
     protected override function execute():void {

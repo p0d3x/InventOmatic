@@ -50,7 +50,7 @@ public class InventOmaticStash extends MovieClip {
     private function loadConfigAndInit():void {
         try {
             Logger.get().debug("Loading config file");
-            var url:URLRequest = new URLRequest("../inventOmaticStashConfigNew.json");
+            var url:URLRequest = new URLRequest("../inventOmaticStashConfig.json");
             var loader:URLLoader = new URLLoader();
             loader.load(url);
             loader.addEventListener(Event.COMPLETE, loaderComplete);
@@ -61,7 +61,6 @@ public class InventOmaticStash extends MovieClip {
                 Logger.get().debugWindowVisible(config.debug);
                 Logger.get().logLevel = config.logLevel;
                 Logger.get().debug("Config file is loaded!");
-                Logger.get().debug("BGSCodeObj: {0}", _parent.codeObj);
                 init();
             }
         } catch (e:Error) {
