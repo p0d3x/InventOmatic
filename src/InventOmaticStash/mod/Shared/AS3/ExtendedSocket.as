@@ -1,5 +1,4 @@
-package Shared.AS3
-{
+package Shared.AS3 {
 import flash.display.MovieClip;
 import flash.errors.EOFError;
 import flash.errors.IOError;
@@ -19,35 +18,27 @@ public class ExtendedSocket extends MovieClip implements IEventDispatcher {
     private var dataTimer:Timer;
     private var connectCalled:Boolean = false;
 
-    public function ExtendedSocket(param1:*)
-    {
-        this.connectTimer = new Timer(5,1);
-        this.dataTimer = new Timer(50,1);
+    public function ExtendedSocket(param1:*) {
+        this.connectTimer = new Timer(5, 1);
+        this.dataTimer = new Timer(50, 1);
         super();
-        if(param1 != null)
-        {
+        if (param1 != null) {
             this.sfCodeObject = param1;
-            if(param1.call != null)
-            {
-                this.sfCodeObject.call("register",this);
+            if (param1.call != null) {
+                this.sfCodeObject.call("register", this);
             }
         }
     }
 
-    public function connect(param1:String, param2:String) : void
-    {
-        var _loc3_:String = this.name;
-        var _loc4_:Object = this;
-        if(this.connected)
-        {
+    public function connect(param1:String, param2:String):void {
+        if (this.connected) {
             return;
         }
         this.connectCalled = true;
-        if(this.sfCodeObject.call != null)
-        {
-            this.sfCodeObject.call("connect",param1,param2);
-            this.connectTimer.addEventListener(TimerEvent.TIMER_COMPLETE,this.onConnectLoop);
-            this.dataTimer.addEventListener(TimerEvent.TIMER_COMPLETE,this.onSocketLoop);
+        if (this.sfCodeObject.call != null) {
+            this.sfCodeObject.call("connect", param1, param2);
+            this.connectTimer.addEventListener(TimerEvent.TIMER_COMPLETE, this.onConnectLoop);
+            this.dataTimer.addEventListener(TimerEvent.TIMER_COMPLETE, this.onSocketLoop);
             this.connectTimer.reset();
             this.connectTimer.start();
             this.dataTimer.reset();
@@ -55,66 +46,51 @@ public class ExtendedSocket extends MovieClip implements IEventDispatcher {
         }
     }
 
-    public function close() : void
-    {
+    public function close():void {
     }
 
-    public function readByte() : int
-    {
+    public function readByte():int {
         return this.sfCodeObject.call("readByte");
     }
 
-    public function readUTFBytes(param1:uint) : String
-    {
-        if(param1 > this.bytesAvailable)
-        {
+    public function readUTFBytes(param1:uint):String {
+        if (param1 > this.bytesAvailable) {
             param1 = this.bytesAvailable;
         }
         var _loc2_:String = "";
-        _loc2_ = this.sfCodeObject.call("readUTFBytes",param1);
-        if(_loc2_ === "$$IOERROR$$")
-        {
+        _loc2_ = this.sfCodeObject.call("readUTFBytes", param1);
+        if (_loc2_ === "$$IOERROR$$") {
             this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
             throw new IOError();
         }
-        if(_loc2_ === "$$EOFERROR$$")
-        {
+        if (_loc2_ === "$$EOFERROR$$") {
             throw new EOFError();
         }
         return _loc2_;
     }
 
-    public function writeUTFBytes(param1:String) : void
-    {
-        var _loc2_:Boolean = this.sfCodeObject.call("writeUTFBytes",param1);
-        if(!_loc2_)
-        {
+    public function writeUTFBytes(param1:String):void {
+        var _loc2_:Boolean = this.sfCodeObject.call("writeUTFBytes", param1);
+        if (!_loc2_) {
             this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
             throw new IOError();
         }
     }
 
-    public function flush() : void
-    {
+    public function flush():void {
     }
 
-    public function onConnectLoop() : void
-    {
-        if(this.connected)
-        {
+    public function onConnectLoop():void {
+        if (this.connected) {
             this.dispatchEvent(new Event("ExtendedSocket::CONNECT"));
-        }
-        else
-        {
+        } else {
             this.connectTimer.reset();
             this.connectTimer.start();
         }
     }
 
-    public function onSocketLoop() : void
-    {
-        if(this.bytesAvailable > this.prevBytesAvailable)
-        {
+    public function onSocketLoop():void {
+        if (this.bytesAvailable > this.prevBytesAvailable) {
             this.dispatchEvent(new Event("ExtendedSocket::SocketData"));
         }
         this.prevBytesAvailable = this.bytesAvailable;
